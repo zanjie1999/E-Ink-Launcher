@@ -4,6 +4,7 @@ apply plugin: 'com.android.application'
 apply from: '../config.gradle'
 
 android {
+    namespace 'cn.modificator.launcher'
     signingConfigs {
         config {
             keyAlias release.keyAlias
@@ -39,10 +40,6 @@ android {
             signingConfig signingConfigs.config
         }
     }
-    lintOptions {
-        checkReleaseBuilds false
-        abortOnError false
-    }
 
     flavorDimensions "screen"
     productFlavors {
@@ -54,18 +51,16 @@ android {
         }
     }
     packagingOptions {
-        exclude 'proguard-project.txt'
-        exclude 'project.properties'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/NOTICE.txt'
-        exclude 'META-INF/NOTICE'
-        exclude 'META-INF/DEPENDENCIES.txt'
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/androidx*'
-        exclude 'META-INF/spring*'
-        exclude 'META-INF/proguard/*'
-//        exclude '/org/**'
+        jniLibs {
+            excludes += ['META-INF/androidx*', 'META-INF/spring*', 'META-INF/proguard/*']
+        }
+        resources {
+            excludes += ['proguard-project.txt', 'project.properties', 'META-INF/LICENSE.txt', 'META-INF/LICENSE', 'META-INF/NOTICE.txt', 'META-INF/NOTICE', 'META-INF/DEPENDENCIES.txt', 'META-INF/DEPENDENCIES', 'META-INF/androidx*', 'META-INF/spring*', 'META-INF/proguard/*']
+        }
+    }
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
     }
 }
 
