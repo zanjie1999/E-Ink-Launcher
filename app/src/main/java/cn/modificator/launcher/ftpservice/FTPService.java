@@ -43,7 +43,7 @@ import java.util.List;
 
 public class FTPService extends Service implements Runnable {
 
-  public static final int DEFAULT_PORT = 2333;
+  public static final int DEFAULT_PORT = 4567;
   public static final String PORT_PREFERENCE_KEY = "ftpPort";
 
   // Service will (global) broadcast when server start/stop

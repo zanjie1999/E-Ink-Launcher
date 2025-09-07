@@ -214,7 +214,7 @@
           android:layout_width="60dp"
           android:layout_height="@dimen/menu_item_height"
           android:layout_gravity="bottom|right"
-          android:background="#ffffff"
+          android:background="@color/menuBgColor"
           android:clickable="true"
           android:padding="5dp"
           android:src="@drawable/close_unclick" />-->
@@ -224,7 +224,7 @@
         android:layout_width="60dp"
         android:layout_height="@dimen/menu_item_height"
         android:layout_gravity="bottom|right"
-        android:background="#ffffff"
+        android:background="@color/menuBgColor"
         android:clickable="true"
         android:padding="5dp"
         android:src="@drawable/close_unclick" />
@@ -280,7 +280,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="right|bottom"
         android:layout_marginBottom="@dimen/menu_item_height"
-        android:background="@drawable/border">
+        android:background="@color/menuBgColor">
 
         <LinearLayout
             android:id="@+id/menuList"

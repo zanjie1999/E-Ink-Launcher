@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">E-Ink Launcher</string>
+    <string name="app_name">咩E-Ink Launcher</string>
     <string name="file_manager">Menedżer plików</string>
 
     <string name="empty_directory_hint">Pusty folder</string>

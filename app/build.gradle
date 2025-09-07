@@ -1,26 +1,16 @@
 //noinspection GradleDynamicVersion
 apply plugin: 'com.android.application'
 //apply plugin: 'com.jakewharton.hugo'
-apply from: '../config.gradle'
 
 android {
     namespace 'cn.modificator.launcher'
-    signingConfigs {
-        config {
-            keyAlias release.keyAlias
-            keyPassword release.keyPassword
-            storeFile release.storeFile
-            storePassword release.storePassword
-        }
-    }
-    compileSdkVersion 31
+    compileSdkVersion 32
     defaultConfig {
-        applicationId "cn.modificator.launcher"
+        applicationId "com.zyyme.einklauncher"
         minSdkVersion 14
-        targetSdkVersion 31
+        targetSdkVersion 32
         versionCode 30
-        versionName "0.1.8.6"
-        signingConfig signingConfigs.config
+        versionName "0.1.8.6.1"
     }
     buildTypes {
         release {
@@ -29,7 +19,6 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.config
         }
         debug {
             debuggable true
@@ -37,7 +26,6 @@ android {
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.config
         }
     }
 
@@ -69,6 +57,7 @@ dependencies {
     implementation 'androidx.core:core:1.7.0'
     implementation 'org.apache.ftpserver:ftplet-api:1.1.0'
     implementation 'org.apache.ftpserver:ftpserver-core:1.1.0'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
     //can't connect http://fw.ydevices.com/maven
 //    compileOnly files('src/libs/yotadevice_sdk-3.7.12.jar')
 }

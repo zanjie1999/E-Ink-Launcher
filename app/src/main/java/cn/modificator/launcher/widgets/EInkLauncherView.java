@@ -120,7 +120,7 @@ public class EInkLauncherView extends ViewGroup{
   }
 
   private void init() {
-    dragDistance = Math.min(getMeasuredWidth(), getMeasuredHeight()) / 6f;
+    dragDistance = Math.min(getMeasuredWidth(), getMeasuredHeight()) / 8f;
     packageManager = getContext().getPackageManager();
 
 //    gestureDetector = new GestureDetector(getContext(), onGestureListener);

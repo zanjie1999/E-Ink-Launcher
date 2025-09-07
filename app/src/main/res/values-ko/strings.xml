@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_manager_finish">완료</string>
-    <string name="app_name">E-Ink Launcher</string>
+    <string name="app_name">咩E-Ink Launcher</string>
     <string name="battery_charging">충전 중</string>
     <string name="battery_full">충전 완료</string>
     <string name="battery_heat">과열</string>

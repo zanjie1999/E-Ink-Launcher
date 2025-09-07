@@ -248,7 +248,7 @@ public class Launcher extends Activity {
       if (!is24Hour && !isChina) {
         timeFormatTextBuilder.append(" a");
       }
-      timeFormatTextBuilder.append(" EEEE");
+      timeFormatTextBuilder.append(" EEE");
       textClock.setText(new SimpleDateFormat(timeFormatTextBuilder.toString(), Locale.getDefault()).format(mCalendar.getTime()));
     }
   }

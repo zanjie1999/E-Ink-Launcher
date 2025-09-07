@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bgColor">#4D000000</color>
+    <color name="textColor">#ffffff</color>
+    <color name="mainBgColor">#4D000000</color>
+    <color name="menuBgColor">#B3000000</color>
+</resources>

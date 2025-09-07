@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">E-Ink Launcher</string>
+    <string name="app_name">咩E-Ink Launcher</string>
     <string name="file_manager">File Manager</string>
 
     <string name="empty_directory_hint">Empty directory</string>
@@ -55,7 +55,7 @@
 
     <string name="item_lockscreen">Lock Screen</string>
     <string name="launch_failed">Launch failed</string>
-    <string name="launch_devicemanager_failed">Please open Device Policy Manager and enable E-Ink Launcher</string>
+    <string name="launch_devicemanager_failed">Please open Device Policy Manager and enable 咩E-Ink Launcher</string>
     <string name="launch_devicemanager">Open Device Policy Manager</string>
 
     <string-array name="power_menu">
