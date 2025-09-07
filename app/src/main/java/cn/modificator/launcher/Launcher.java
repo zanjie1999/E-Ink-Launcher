@@ -18,11 +18,15 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -41,10 +45,11 @@ import cn.modificator.launcher.widgets.EInkLauncherView;
 /**
  * Created by mod on 16-4-22.
  */
-public class Launcher extends Activity {
+public class Launcher extends AppCompatActivity {
 
   public static final String ROW_NUM_KEY = "rowNumKey";
   public static final String COL_NUM_KEY = "colNumKey";
+  public static final String THEME_MODE_KEY = "themeMode";
   public static final String APP_NAME_SHOW_LINES = "appNameShowLines";
   public static final String HIDE_APPS_KEY = "hideAppsKey";
   public static final String DELETEAPP = "deleteApp";
@@ -73,8 +78,20 @@ public class Launcher extends Activity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.launcher_activity);
     config = new Config(this);
+
+    // 主题切换
+    int themeMode = config.getThemeMode();
+    Log.d("zyyme设置themeMode", String.valueOf(themeMode));
+    if (themeMode == 0) {
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+    } else if (themeMode == 1 && AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+    } else if (themeMode == 2 && AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_NO) {
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+    }
+
+    setContentView(R.layout.launcher_activity);
     WifiControl.init(this);
     toggleStatusBar();
     if (getExternalCacheDir() != null) {
@@ -280,6 +297,10 @@ public class Launcher extends Activity {
     @Override
     public void onReceive(Context context, Intent intent) {
       Bundle bundle = intent.getExtras();
+      if (bundle != null) {
+        Log.d("zyyme收到广播", bundle.toString());
+      }
+
       if (bundle.containsKey(ROW_NUM_KEY)) {
         updateRowNum(bundle.getInt(ROW_NUM_KEY));
       } else if (bundle.containsKey(COL_NUM_KEY)) {
@@ -306,7 +327,21 @@ public class Launcher extends Activity {
         if (lines==3)lines=Integer.MAX_VALUE;
         config.setAppNameLines(lines);
         launcherView.updateAppNameLines();
+      } else if (bundle.containsKey(THEME_MODE_KEY)){
+        // 主题切换
+        int themeMode = bundle.getInt(THEME_MODE_KEY);
+        config.setThemeMode(themeMode);
+        Log.d("zyyme设置themeMode", String.valueOf(themeMode));
+        if (themeMode == 0) {
+          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        } else if (themeMode == 1) {
+          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        } else if (themeMode == 2) {
+          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
       }
+      // 避免多次调用
+      intent.replaceExtras(new Bundle());
     }
   }
 

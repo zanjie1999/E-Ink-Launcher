@@ -35,14 +35,14 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:text="1/1"
-                android:textColor="#000000"
+                android:textColor="@color/textColor"
                 android:textSize="17sp" />
 
             <TextView
                 android:id="@+id/textClock"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#000000"
+                android:textColor="@color/textColor"
                 android:textSize="16sp"/>
 
             <Space
@@ -67,7 +67,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="充电中"
-                    android:textColor="#000000"
+                    android:textColor="@color/textColor"
                     android:textSize="9sp" />
             </LinearLayout>
 

@@ -15,6 +15,8 @@ public class Config {
   public static int colNum = -1;
   //行数
   public static int rowNum = -1;
+
+  public static int themeMode = -1;
   public static float fontSize = -1;
   public static int appNameLines = Integer.MAX_VALUE;
   public static boolean hideDivider = false;
@@ -62,6 +64,23 @@ public class Config {
     this.rowNum = rowNum;
     SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
     preferences.edit().putInt(Launcher.ROW_NUM_KEY, rowNum).apply();
+  }
+
+  public int getThemeMode() {
+    if (themeMode == -1) {
+      SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
+      themeMode = preferences.getInt(Launcher.THEME_MODE_KEY, 0);
+    }
+    return themeMode;
+  }
+
+
+  public void setThemeMode(int themeMode) {
+    if (this.themeMode == themeMode)
+      return;
+    this.themeMode = themeMode;
+    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
+    preferences.edit().putInt(Launcher.THEME_MODE_KEY, rowNum).apply();
   }
 
   public void addHideApp(String packageName) {

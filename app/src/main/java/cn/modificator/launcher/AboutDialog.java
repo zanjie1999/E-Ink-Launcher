@@ -42,7 +42,7 @@ public class AboutDialog {
 
     TextView authorInfo = new TextView(context);
 
-    authorInfo.setText("因为原作者已经不维护了\n这是咩咩自用的修改版\n哔哩哔哩：郑羊羊");
+    authorInfo.setText("因为原作者已经不维护了\n这是咩咩自用的修改版\n哔哩哔哩：郑羊羊\n酷安：zyyme");
     authorInfo.setTextSize(16);
     authorInfo.setTextColor(0xff000000);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {

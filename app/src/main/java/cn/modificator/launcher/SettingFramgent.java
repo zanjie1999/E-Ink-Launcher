@@ -36,6 +36,7 @@ import cn.modificator.launcher.model.WifiControl;
 public class SettingFramgent extends Fragment implements View.OnClickListener {
   Spinner col_num_spinner;
   Spinner row_num_spinner;
+  Spinner theme_mode_spinner;
   Spinner appNameLinesSpinner;
   SeekBar font_control;
   View rootView;
@@ -68,7 +69,7 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
     col_num_spinner = rootView.findViewById(R.id.col_num_spinner);
     row_num_spinner = rootView.findViewById(R.id.row_num_spinner);
     appNameLinesSpinner = rootView.findViewById(R.id.appNameLine);
-
+    theme_mode_spinner = rootView.findViewById(R.id.theme_mode_spinner);
     showStatusBar.setOnClickListener(this);
     hideDivider.setOnClickListener(this);
     showCustomIcon.setOnClickListener(this);
@@ -108,6 +109,23 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
 
       }
     });
+
+    theme_mode_spinner.setSelection(Config.themeMode, false);
+    theme_mode_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+      @Override
+      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        Intent intent = new Intent();
+        intent.putExtra(Launcher.THEME_MODE_KEY, position);
+        intent.setAction(Launcher.LAUNCHER_ACTION);
+        getActivity().sendBroadcast(intent);
+      }
+
+      @Override
+      public void onNothingSelected(AdapterView<?> parent) {
+
+      }
+    });
+
     appNameLinesSpinner.setSelection(getAppLineSpinnerSelectPosition(),false);
     appNameLinesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override

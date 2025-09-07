@@ -11,6 +11,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import cn.modificator.launcher.R;
+
 /**
  * Created by mod on 16-4-25.
  */
@@ -41,7 +43,7 @@ public class BatteryView extends View {
     circlePaint.setStyle(Paint.Style.STROKE);
     circlePaint.setAntiAlias(true);
     textPaint = new TextPaint();
-    textPaint.setColor(0xff000000);
+    textPaint.setColor(getResources().getColor(R.color.textColor));
     textPaint.setAntiAlias(true);
   }
 
@@ -50,7 +52,7 @@ public class BatteryView extends View {
     super.onDraw(canvas);
     int size = getWidth() > getHeight() ? getHeight() : getWidth();
     circlePaint.setStrokeWidth(size / 10);
-    circlePaint.setColor(0xffcccccc);
+    circlePaint.setColor(getResources().getColor(R.color.menuBgColor));
     canvas.drawCircle(getWidth() / 2, getHeight() / 2, (size - circlePaint.getStrokeWidth()) / 2, circlePaint);
     RectF rectF = new RectF(
         (getWidth() - size + circlePaint.getStrokeWidth()) / 2,
@@ -58,7 +60,7 @@ public class BatteryView extends View {
         (getWidth() - size - circlePaint.getStrokeWidth()) / 2 + size,
         (getHeight() - size - circlePaint.getStrokeWidth()) / 2 + size
     );
-    circlePaint.setColor(0xff000000);
+    circlePaint.setColor(getResources().getColor(R.color.textColor));
     canvas.drawArc(rectF, -90, progress * 1f / maxProgress * 360, false, circlePaint);
     textPaint.setTextSize(size / 2.8f);
     drawText(canvas);

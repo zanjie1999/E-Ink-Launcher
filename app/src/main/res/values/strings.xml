@@ -77,4 +77,10 @@
     <string name="show_custom_icon">Show custom icon</string>
     <string name="notification_click_back_launcher">Click here, back to Launcher</string>
     <string name="app_show_name">App name</string>
+    <string name="setting_theme_mode">主题</string>
+    <string-array name="theme_options_array">
+        <item>跟随系统</item>
+        <item>亮色模式</item>
+        <item>暗色模式</item>
+    </string-array>
 </resources>
