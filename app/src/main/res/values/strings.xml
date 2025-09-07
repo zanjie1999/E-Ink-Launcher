@@ -82,5 +82,7 @@
         <item>跟随系统</item>
         <item>亮色模式</item>
         <item>暗色模式</item>
+        <item>纯白背景</item>
+        <item>纯黑背景</item>
     </string-array>
 </resources>

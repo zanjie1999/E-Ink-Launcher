@@ -78,20 +78,13 @@ public class Launcher extends AppCompatActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    setContentView(R.layout.launcher_activity);
     config = new Config(this);
 
     // 主题切换
     int themeMode = config.getThemeMode();
-    Log.d("zyyme设置themeMode", String.valueOf(themeMode));
-    if (themeMode == 0) {
-      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-    } else if (themeMode == 1 && AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-    } else if (themeMode == 2 && AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_NO) {
-      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-    }
+    setThemeMode(themeMode);
 
-    setContentView(R.layout.launcher_activity);
     WifiControl.init(this);
     toggleStatusBar();
     if (getExternalCacheDir() != null) {
@@ -105,6 +98,45 @@ public class Launcher extends AppCompatActivity {
 
     initView();
     checkLaunchHomeNotification();
+  }
+
+  private void setThemeMode(int themeMode) {
+    Log.d("zyyme设置themeMode", String.valueOf(themeMode));
+    if (themeMode == 0) {
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+    } else if (themeMode == 1 && AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+      // 亮色
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+    } else if (themeMode == 2 && AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_NO) {
+      // 暗色
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+    } else if (themeMode == 3) {
+      // 纯白
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+      findViewById(R.id.launcherBg).post(new Runnable() {
+        @Override
+        public void run() {
+          findViewById(R.id.launcherBg).setBackgroundColor(0xffffffff);
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(0xffffffff);
+            getWindow().setNavigationBarColor(0xffffffff);
+          }
+        }
+      });
+    } else if (themeMode == 4) {
+      // 纯黑
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+      findViewById(R.id.launcherBg).post(new Runnable() {
+        @Override
+        public void run() {
+          findViewById(R.id.launcherBg).setBackgroundColor(0xff000000);
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(0xff000000);
+            getWindow().setNavigationBarColor(0xff000000);
+          }
+        }
+      });
+    }
   }
 
 
@@ -331,14 +363,7 @@ public class Launcher extends AppCompatActivity {
         // 主题切换
         int themeMode = bundle.getInt(THEME_MODE_KEY);
         config.setThemeMode(themeMode);
-        Log.d("zyyme设置themeMode", String.valueOf(themeMode));
-        if (themeMode == 0) {
-          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-        } else if (themeMode == 1) {
-          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-        } else if (themeMode == 2) {
-          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-        }
+        setThemeMode(themeMode);
       }
       // 避免多次调用
       intent.replaceExtras(new Bundle());

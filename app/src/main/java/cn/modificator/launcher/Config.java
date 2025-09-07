@@ -80,7 +80,7 @@ public class Config {
       return;
     this.themeMode = themeMode;
     SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putInt(Launcher.THEME_MODE_KEY, rowNum).apply();
+    preferences.edit().putInt(Launcher.THEME_MODE_KEY, themeMode).apply();
   }
 
   public void addHideApp(String packageName) {
