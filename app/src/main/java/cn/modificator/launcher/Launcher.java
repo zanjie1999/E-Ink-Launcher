@@ -104,10 +104,10 @@ public class Launcher extends AppCompatActivity {
     Log.d("zyyme设置themeMode", String.valueOf(themeMode));
     if (themeMode == 0) {
       AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-    } else if (themeMode == 1 && AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+    } else if (themeMode == 1) {
       // 亮色
       AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-    } else if (themeMode == 2 && AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_NO) {
+    } else if (themeMode == 2) {
       // 暗色
       AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
     } else if (themeMode == 3) {
