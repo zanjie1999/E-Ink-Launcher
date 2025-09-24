@@ -285,14 +285,14 @@ public class Launcher extends AppCompatActivity {
       boolean is24Hour = DateFormat.is24HourFormat(this);
       mCalendar.setTimeInMillis(System.currentTimeMillis());
 
-      StringBuilder timeFormatTextBuilder = new StringBuilder("yyyy-MM-dd ");
+      StringBuilder timeFormatTextBuilder = new StringBuilder("yyyy/M/d ");
       if (!is24Hour && isChina) {
         timeFormatTextBuilder.append(Utils.getAMPMCNString(mCalendar.get(Calendar.HOUR), mCalendar.get(Calendar.AM_PM)));
       }
       if (is24Hour) {
-        timeFormatTextBuilder.append("HH:mm");
+        timeFormatTextBuilder.append("H:mm");
       } else {
-        timeFormatTextBuilder.append("hh:mm");
+        timeFormatTextBuilder.append("h:mm");
       }
       if (!is24Hour && !isChina) {
         timeFormatTextBuilder.append(" a");

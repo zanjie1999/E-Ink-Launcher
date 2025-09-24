@@ -9,8 +9,8 @@ android {
         applicationId "com.zyyme.einklauncher"
         minSdkVersion 14
         targetSdkVersion 32
-        versionCode 32
-        versionName "1.1"
+        versionCode 34
+        versionName "1.3"
     }
     buildTypes {
         release {

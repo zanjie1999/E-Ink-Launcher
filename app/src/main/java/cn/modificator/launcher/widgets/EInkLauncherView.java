@@ -1,6 +1,7 @@
 package cn.modificator.launcher.widgets;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -24,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,6 +43,7 @@ import cn.modificator.launcher.model.WifiControl;
 
 import static android.view.View.MeasureSpec.EXACTLY;
 import static android.view.View.MeasureSpec.makeMeasureSpec;
+import static androidx.core.content.ContextCompat.getSystemService;
 
 /**
  * Created by mod on 16-4-23.
@@ -209,14 +212,21 @@ public class EInkLauncherView extends ViewGroup{
           String packageName = dataList.get(COL_NUM * i + j).activityInfo.packageName;
           if (AppDataCenter.wifiPackageName.equals(packageName)){
             WifiControl.bind(itemView, iconReplacePkg,iconReplaceFile);
-          }else if (AppDataCenter.oneKeyLockPackageName.equals(packageName)){
+          } else if (AppDataCenter.oneKeyLockPackageName.equals(packageName)){
             if (iconReplacePkg.contains(packageName)) {
               ((ImageView) itemView.findViewById(R.id.appImage)).setImageURI(Uri.fromFile(iconReplaceFile.get(iconReplacePkg.indexOf(packageName))));
             }else {
               ((ImageView) itemView.findViewById(R.id.appImage)).setImageResource(R.drawable.ic_onekeylock);
             }
             ((TextView) itemView.findViewById(R.id.appName)).setText(R.string.item_lockscreen);
-          }else{
+          } else if (AppDataCenter.oneKeyClearPackageName.equals(packageName)){
+            if (iconReplacePkg.contains(packageName)) {
+              ((ImageView) itemView.findViewById(R.id.appImage)).setImageURI(Uri.fromFile(iconReplaceFile.get(iconReplacePkg.indexOf(packageName))));
+            }else {
+              ((ImageView) itemView.findViewById(R.id.appImage)).setImageResource(R.drawable.ic_onekeyclear);
+            }
+            ((TextView) itemView.findViewById(R.id.appName)).setText("后台清理");
+          } else {
             if (iconReplacePkg.contains(packageName)) {
               ((ImageView) itemView.findViewById(R.id.appImage)).setImageURI(Uri.fromFile(iconReplaceFile.get(iconReplacePkg.indexOf(packageName))));
             } else {
@@ -324,14 +334,34 @@ public class EInkLauncherView extends ViewGroup{
         return;
       }
       ResolveInfo info = dataList.get(position);
-      if (info.activityInfo.packageName == AppDataCenter.oneKeyLockPackageName){
+      if (AppDataCenter.oneKeyLockPackageName.equals(info.activityInfo.packageName)){
         ((Launcher) v.getContext()).lockScreen();
-      }else if (info.activityInfo.packageName == AppDataCenter.wifiPackageName) {
+      } else if (AppDataCenter.wifiPackageName.equals(info.activityInfo.packageName)) {
         Activity activity = (Activity) getContext();
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && activity.checkSelfPermission(Manifest.permission.CHANGE_WIFI_STATE)!=PackageManager.PERMISSION_GRANTED) {
 //          activity.requestPermissions(new String[]{Manifest.permission.CHANGE_WIFI_STATE}, 0);
 //        }
         WifiControl.onClickWifiItem();
+      } else if (AppDataCenter.oneKeyClearPackageName.equals(info.activityInfo.packageName)) {
+        // 后台清理
+        List<byte[]> men = new ArrayList<>();
+        int mb = 0;
+        try {
+          // 每次10MB
+          while (true) {
+            men.add(new byte[10 * 1024 * 1024]);
+            // 停停让系统有时间反应
+            Thread.sleep(10);
+            mb += 10;
+          }
+        } catch (OutOfMemoryError | InterruptedException e) {
+          e.printStackTrace();
+        } finally {
+          // 回收内存
+          men.clear();
+          System.gc();
+        }
+        Toast.makeText(getContext(), "清理了" + mb + "MB", Toast.LENGTH_SHORT).show();
       }else{
         ComponentName componentName = new ComponentName(info.activityInfo.packageName, info.activityInfo.name);
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -356,7 +386,7 @@ public class EInkLauncherView extends ViewGroup{
         return false;
       }
       final String packageName = dataList.get(position).activityInfo.packageName;
-      if (packageName == AppDataCenter.oneKeyLockPackageName){
+      if (AppDataCenter.oneKeyLockPackageName.equals(packageName)){
         if (!isSystemApp) return true;
         new AlertDialog.Builder(v.getContext())
                 .setTitle(R.string.power_title)
@@ -384,9 +414,12 @@ public class EInkLauncherView extends ViewGroup{
                 })
                 .setPositiveButton("取消", null)
                 .show();
-      }else if (packageName == AppDataCenter.wifiPackageName) {
+      }else if (AppDataCenter.wifiPackageName.equals(packageName)) {
         WifiControl.onLongClickWifiItem();
-      }else {
+      } else if (AppDataCenter.oneKeyClearPackageName.equals(packageName)) {
+        // 长按清理
+
+      } else {
         new AlertDialog.Builder(v.getContext())
                 .setIcon(dataList.get(position).loadIcon(packageManager))
                 .setTitle(dataList.get(position).loadLabel(packageManager))

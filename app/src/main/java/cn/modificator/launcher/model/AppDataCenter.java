@@ -34,6 +34,7 @@ public class AppDataCenter {
 
   public static final String wifiPackageName = "E-ink_Launcher.WiFi";
   public static final String oneKeyLockPackageName = "E-ink_Launcher.Lock";
+  public static final String oneKeyClearPackageName = "E-ink_Launcher.Clear";
 
   public AppDataCenter(Context context) {
     this.mContext = context;
@@ -85,6 +86,8 @@ public class AppDataCenter {
         mApps.add(resolveInfo);
       }
     }
+    if (!hideApps.contains(oneKeyClearPackageName))
+      mApps.add(createClearIcon());
     if (!hideApps.contains(oneKeyLockPackageName))
       mApps.add(createPowerIcon());
     if (!hideApps.contains(wifiPackageName))
@@ -98,6 +101,7 @@ public class AppDataCenter {
     mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
     mApps.clear();
     mApps.addAll(mContext.getPackageManager().queryIntentActivities(mainIntent, 0));
+    mApps.add(createClearIcon());
     mApps.add(createPowerIcon());
     mApps.add(createWifiIcon());
     launcherView.setHideAppPkg(hideApps);
@@ -191,7 +195,16 @@ public class AppDataCenter {
      ResolveInfo resolveInfo = new ResolveInfo();
      resolveInfo.icon = R.drawable.ic_onekeylock;
      resolveInfo.activityInfo = new ActivityInfo();
-     resolveInfo.activityInfo.packageName =oneKeyLockPackageName;
+     resolveInfo.activityInfo.packageName = oneKeyLockPackageName;
      return resolveInfo;
    }
+
+
+  private ResolveInfo createClearIcon(){
+    ResolveInfo resolveInfo = new ResolveInfo();
+    resolveInfo.icon = R.drawable.ic_onekeyclear;
+    resolveInfo.activityInfo = new ActivityInfo();
+    resolveInfo.activityInfo.packageName = oneKeyClearPackageName;
+    return resolveInfo;
+  }
 }
