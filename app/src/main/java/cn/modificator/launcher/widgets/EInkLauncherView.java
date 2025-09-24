@@ -123,7 +123,10 @@ public class EInkLauncherView extends ViewGroup{
   }
 
   private void init() {
+    // 决定了滑动的灵敏度，越小越容易触发
     dragDistance = Math.min(getMeasuredWidth(), getMeasuredHeight()) / 8f;
+    Log.d("dragDistance", dragDistance + "");
+
     packageManager = getContext().getPackageManager();
 
 //    gestureDetector = new GestureDetector(getContext(), onGestureListener);
@@ -135,7 +138,10 @@ public class EInkLauncherView extends ViewGroup{
 
   @Override
   protected void onLayout(boolean changed, int l, int t, int r, int b) {
-    dragDistance = Math.min(getMeasuredWidth(), getMeasuredHeight()) / 6f;
+    // 决定了滑动的灵敏度，越小越容易触发
+    dragDistance = Math.min(getMeasuredWidth(), getMeasuredHeight()) / 8f;
+    Log.d("dragDistance", dragDistance + "");
+
 
     for (int i = 0; i < ROW_NUM; i++) {
       for (int j = 0; j < COL_NUM; j++) {

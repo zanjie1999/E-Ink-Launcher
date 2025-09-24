@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -191,6 +192,19 @@ public class Launcher extends AppCompatActivity {
         dataCenter.refreshAppList();
         config.setHideApps(dataCenter.getHideApps());
         v.setVisibility(View.GONE);
+      }
+    });
+    batteryProgress.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$PowerUsageSummaryActivity"));
+        try {
+          startActivity(intent);
+        } catch (Exception e) {
+          Toast.makeText(Launcher.this, "无法打开电池设置", Toast.LENGTH_SHORT).show();
+          e.printStackTrace();
+        }
       }
     });
     launcherView.setTouchListener(new EInkLauncherView.TouchListener() {
