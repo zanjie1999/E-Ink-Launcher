@@ -27,7 +27,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -350,24 +352,40 @@ public class EInkLauncherView extends ViewGroup{
         WifiControl.onClickWifiItem();
       } else if (AppDataCenter.oneKeyClearPackageName.equals(info.activityInfo.packageName)) {
         // 后台清理
-        List<byte[]> men = new ArrayList<>();
-        int mb = 0;
+        String size = null;
         try {
-          // 每次10MB
-          while (true) {
-            men.add(new byte[10 * 1024 * 1024]);
-            // 停停让系统有时间反应
-            Thread.sleep(10);
-            mb += 10;
+          Toast.makeText(getContext(), "开始清理", Toast.LENGTH_SHORT).show();
+          Process shellProcess = new ProcessBuilder(getContext().getApplicationInfo().nativeLibraryDir + "/libfillRam.so").start();
+          BufferedReader reader = new BufferedReader(new InputStreamReader(shellProcess.getInputStream()));
+          String line = "";
+          while (line != null) {
+            size = line;
+            line = reader.readLine();
           }
-        } catch (OutOfMemoryError | InterruptedException e) {
-          e.printStackTrace();
-        } finally {
-          // 回收内存
-          men.clear();
-          System.gc();
+        } catch (Exception e) {
+          Toast.makeText(getContext(), "清理出错" + e.getMessage(), Toast.LENGTH_LONG).show();
+          Log.e("zyyme清理出错", "" + e.getMessage());
         }
-        Toast.makeText(getContext(), "清理了" + mb + "MB", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "已清理" + size, Toast.LENGTH_SHORT).show();
+
+//        List<byte[]> men = new ArrayList<>();
+//        int mb = 0;
+//        try {
+//          // 每次10MB
+//          while (true) {
+//            men.add(new byte[10 * 1024 * 1024]);
+//            // 停停让系统有时间反应
+//            Thread.sleep(10);
+//            mb += 10;
+//          }
+//        } catch (OutOfMemoryError | InterruptedException e) {
+//          e.printStackTrace();
+//        } finally {
+//          // 回收内存
+//          men.clear();
+//          System.gc();
+//        }
+//        Toast.makeText(getContext(), "清理了" + mb + "MB", Toast.LENGTH_SHORT).show();
       }else{
         ComponentName componentName = new ComponentName(info.activityInfo.packageName, info.activityInfo.name);
         Intent intent = new Intent(Intent.ACTION_MAIN);
