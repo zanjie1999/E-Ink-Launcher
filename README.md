@@ -9,7 +9,7 @@
 2. 支持暗色模式
 3. 优化滑动翻页
 4. 适配小屏幕  
-5. 无需root的内存清理功能，写了个Golang项目 [fillRam](https://github.com/zanjie1999/fillRam) 实现
+5. 无需root的内存清理功能，写了个Golang项目 [fillRam](https://github.com/zanjie1999/fillRam) 实现  
 
 -------------------------------------------
 
