@@ -13,6 +13,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -161,8 +162,7 @@ public class Launcher extends AppCompatActivity {
     dataCenter.setPageStatus(pageStatus);
     dataCenter.setLauncherView(launcherView);
     //加载之前保存的桌面数据
-    updateColNum(config.getColNum());
-    updateRowNum(config.getRowNum());
+    updateColRowNum(config.getColNum(), config.getRowNum());
 
     findViewById(R.id.lastPage).setOnClickListener(new View.OnClickListener() {
       @Override
@@ -245,14 +245,33 @@ public class Launcher extends AppCompatActivity {
     }
   }
 
+  private void updateColRowNum(int colNum, int rowNum) {
+    // 横屏时反转row和col   只resetIconLayout一次提升性能
+    if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+      launcherView.setColRowNum(colNum, rowNum);
+    } else {
+      launcherView.setColRowNum(rowNum, colNum);
+    }
+    dataCenter.setRowNum(rowNum);
+    config.setRowNum(rowNum);
+  }
+
   private void updateRowNum(int rowNum) {
-    launcherView.setRowNum(rowNum);
+    if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+      launcherView.setRowNum(rowNum);
+    } else {
+      launcherView.setColNum(rowNum);
+    }
     dataCenter.setRowNum(rowNum);
     config.setRowNum(rowNum);
   }
 
   private void updateColNum(int colNum) {
-    launcherView.setColNum(colNum);
+    if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+      launcherView.setColNum(colNum);
+    } else {
+      launcherView.setRowNum(colNum);
+    }
     dataCenter.setColNum(colNum);
     config.setColNum(colNum);
   }

@@ -287,6 +287,11 @@ public class EInkLauncherView extends ViewGroup{
     return getAdjustedWidth() / COL_NUM;
   }
 
+  public void setColRowNum(int colNum, int rowNum) {
+    this.COL_NUM = colNum;
+    this.ROW_NUM = rowNum;
+    resetIconLayout();
+  }
   public void setColNum(int colNum) {
     this.COL_NUM = colNum;
     resetIconLayout();

@@ -24,9 +24,9 @@
     <string name="setting_set_font_size">设置字体大小</string>
     <string name="setting_apps_manager">管理应用</string>
     <string name="setting_open_device_manager">打开设备管理器</string>
-    <string name="setting_column_icons">每列图标</string>
+    <string name="setting_column_icons">每列图标(长)</string>
     <string name="toast_need_wifi_connnect">大哥诶，麻烦先把WIFI连上吧</string>
-    <string name="setting_row_icons">每行图标</string>
+    <string name="setting_row_icons">每行图标(短)</string>
     <string name="battery_heat">电池过热</string>
     <string name="battery_unknown">电池呢？</string>
     <string name="battery_charging">充电中</string>
