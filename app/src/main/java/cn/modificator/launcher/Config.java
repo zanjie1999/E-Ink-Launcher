@@ -66,6 +66,15 @@ public class Config {
     preferences.edit().putInt(Launcher.ROW_NUM_KEY, rowNum).apply();
   }
 
+  public void setColRowNum(int colNum, int rowNum) {
+    if (this.colNum == colNum && this.rowNum == rowNum)
+      return;
+    this.colNum = colNum;
+    this.rowNum = rowNum;
+    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
+    preferences.edit().putInt(Launcher.COL_NUM_KEY, colNum).putInt(Launcher.ROW_NUM_KEY, rowNum).apply();
+  }
+
   public int getThemeMode() {
     if (themeMode == -1) {
       SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);

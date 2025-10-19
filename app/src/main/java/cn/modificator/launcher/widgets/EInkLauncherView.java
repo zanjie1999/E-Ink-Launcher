@@ -504,20 +504,24 @@ public class EInkLauncherView extends ViewGroup{
   public boolean onTouchEvent(MotionEvent event) {
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN:
+        Log.d("onTouchEvent", "action: down   X:" + event.getX() + "   Y:" + event.getY());
         touchDown = new Point((int) event.getX(), (int) event.getY());
         break;
       case MotionEvent.ACTION_UP:
+        Log.d("onTouchEvent", "action: up   X:" + event.getX() + "   Y:" + event.getY());
         if ((event.getX() > touchDown.x && dragDistance < Math.abs(event.getX() - touchDown.x)) ||
                 (event.getY() > touchDown.y && dragDistance < Math.abs(event.getY() - touchDown.y))) {
-          if (touchListener != null)
+          if (touchListener != null) {
             touchListener.toLast();
 //                    dataCenter.showLastPage();
+          }
           return true;
         }
         if ((event.getX() < touchDown.x && dragDistance < Math.abs(event.getX() - touchDown.x)) ||
                 (event.getY() < touchDown.y && dragDistance < Math.abs(event.getY() - touchDown.y))) {
-          if (touchListener != null)
+          if (touchListener != null) {
             touchListener.toNext();
+          }
           return true;
         }
         return false;
@@ -578,9 +582,11 @@ public class EInkLauncherView extends ViewGroup{
   public boolean onInterceptTouchEvent(MotionEvent event) {
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN:
+        Log.d("onInterceptTouchEvent", "action: down   X:" + event.getX() + "   Y:" + event.getY());
         touchDown = new Point((int) event.getX(), (int) event.getY());
         break;
       case MotionEvent.ACTION_UP:
+        Log.d("onInterceptTouchEvent", "action: up   X:" + event.getX() + "   Y:" + event.getY());
         if ((event.getX() > touchDown.x && dragDistance < Math.abs(event.getX() - touchDown.x)) ||
                 (event.getY() > touchDown.y && dragDistance < Math.abs(event.getY() - touchDown.y))) {
           if (touchListener != null)
@@ -603,9 +609,11 @@ public class EInkLauncherView extends ViewGroup{
   public boolean dispatchTouchEvent(MotionEvent event) {
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN:
+        Log.d("dispatchTouchEvent", "action: down   X:" + event.getX() + "   Y:" + event.getY());
         touchDown = new Point((int) event.getX(), (int) event.getY());
         break;
       case MotionEvent.ACTION_UP:
+        Log.d("dispatchTouchEvent", "action: up   X:" + event.getX() + "   Y:" + event.getY());
         if ((event.getX() > touchDown.x && dragDistance < Math.abs(event.getX() - touchDown.x)) ||
                 (event.getY() > touchDown.y && dragDistance < Math.abs(event.getY() - touchDown.y))) {
           if (touchListener != null)

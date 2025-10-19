@@ -109,17 +109,25 @@ public class AppDataCenter {
   }
 
   public void showNextPage() {
+    Log.d("AppDataCenter", "showNextPage");
     if (pageIndex >= pageCount) return;
     pageIndex++;
     setPageShow();
   }
 
   public void showLastPage() {
+    Log.d("AppDataCenter", "showLastPage");
     if (pageIndex <= 0) return;
     pageIndex--;
     setPageShow();
   }
 
+  public void setColRowNum(int colNum, int rowNum) {
+    this.colNum = colNum;
+    this.rowNum = rowNum;
+    updatePageCount();
+    setPageShow();
+  }
   public void setColNum(int colNum) {
     this.colNum = colNum;
     updatePageCount();

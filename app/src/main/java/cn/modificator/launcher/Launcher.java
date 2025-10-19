@@ -252,8 +252,10 @@ public class Launcher extends AppCompatActivity {
     } else {
       launcherView.setColRowNum(rowNum, colNum);
     }
-    dataCenter.setRowNum(rowNum);
-    config.setRowNum(rowNum);
+    // 算页码数量的，横竖无所谓
+    dataCenter.setColRowNum(colNum, rowNum);
+    // 这个调用在此处是多余的，会return掉，但为了避免方法被用到别的地方XD
+    config.setColRowNum(colNum, rowNum);
   }
 
   private void updateRowNum(int rowNum) {
@@ -319,6 +321,11 @@ public class Launcher extends AppCompatActivity {
       mCalendar.setTimeInMillis(System.currentTimeMillis());
 
       StringBuilder timeFormatTextBuilder = new StringBuilder("yyyy/M/d ");
+      // 防止屏幕过窄点不到设置
+      Log.d("updateTimeShow", "widthPixels:" + getResources().getDisplayMetrics().widthPixels);
+      if (getResources().getDisplayMetrics().widthPixels < 320) {
+        timeFormatTextBuilder = new StringBuilder("M/d ");
+      }
       if (!is24Hour && isChina) {
         timeFormatTextBuilder.append(Utils.getAMPMCNString(mCalendar.get(Calendar.HOUR), mCalendar.get(Calendar.AM_PM)));
       }
