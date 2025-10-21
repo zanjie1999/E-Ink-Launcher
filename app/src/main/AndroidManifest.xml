@@ -27,6 +27,15 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <meta-data
+            android:name="app_description_title"
+            android:resource="@string/app_name" />
+
+        <meta-data
+            android:name="app_description_content"
+            android:resource="@string/uninstall_tip" />
+
+
         <service
             android:name=".ftpservice.FTPService"
             android:enabled="true"
