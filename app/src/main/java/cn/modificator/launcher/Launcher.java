@@ -323,7 +323,9 @@ public class Launcher extends AppCompatActivity {
       StringBuilder timeFormatTextBuilder = new StringBuilder("yyyy/M/d ");
       // 防止屏幕过窄点不到设置
       Log.d("updateTimeShow", "widthPixels:" + getResources().getDisplayMetrics().widthPixels);
-      if (getResources().getDisplayMetrics().widthPixels < 320) {
+      if (getResources().getDisplayMetrics().widthPixels < 161) {
+        timeFormatTextBuilder = new StringBuilder();
+      } else if (getResources().getDisplayMetrics().widthPixels < 320) {
         timeFormatTextBuilder = new StringBuilder("M/d ");
       }
       if (!is24Hour && isChina) {
@@ -337,7 +339,9 @@ public class Launcher extends AppCompatActivity {
       if (!is24Hour && !isChina) {
         timeFormatTextBuilder.append(" a");
       }
-      timeFormatTextBuilder.append(" EEE");
+      if (getResources().getDisplayMetrics().widthPixels > 160) {
+        timeFormatTextBuilder.append(" EEE");
+      }
       textClock.setText(new SimpleDateFormat(timeFormatTextBuilder.toString(), Locale.getDefault()).format(mCalendar.getTime()));
     }
   }
