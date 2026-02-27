@@ -89,6 +89,7 @@ public class Launcher extends Activity {
   private final BroadcastReceiver appChangeReceiver = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
+      launcherView.clearAppCache();
       dataCenter.refreshAppList(launcherView.isDelete());
     }
   };
@@ -98,6 +99,7 @@ public class Launcher extends Activity {
     public void onReceive(Context context, Intent intent) {
       String action = intent.getAction();
       if (Intent.ACTION_MEDIA_MOUNTED.equals(action)) {
+        launcherView.markIconCacheDirty();
         launcherView.refreshReplaceIcon();
       }
     }
@@ -175,9 +177,11 @@ public class Launcher extends Activity {
     dataCenter.setPageStatus(pageStatus);
     dataCenter.setLauncherView(launcherView);
 
-    // 加载之前保存的桌面布局
-    updateColNum(config.getColNum());
-    updateRowNum(config.getRowNum());
+    // 加载之前保存的桌面布局（批量更新避免双重重建）
+    int savedCol = config.getColNum();
+    int savedRow = config.getRowNum();
+    launcherView.setGridSize(savedCol, savedRow);
+    dataCenter.setGridSize(savedCol, savedRow);
 
     // 翻页按钮
     findViewById(R.id.lastPage).setOnClickListener(new View.OnClickListener() {
@@ -423,6 +427,7 @@ public class Launcher extends Activity {
         applyStatusBarVisibility();
       } else if (bundle.containsKey(Config.KEY_SHOW_CUSTOM_ICON)) {
         config.setShowCustomIcon(bundle.getBoolean(Config.KEY_SHOW_CUSTOM_ICON));
+        launcherView.markIconCacheDirty();
         launcherView.refreshReplaceIcon();
       } else if (bundle.containsKey(Config.KEY_APP_NAME_LINES)) {
         int lines = bundle.getInt(Config.KEY_APP_NAME_LINES);

@@ -89,6 +89,14 @@ public class AppDataCenter {
     setPageShow();
   }
 
+  /** 批量设置行列数，只触发一次分页更新 */
+  public void setGridSize(int colNum, int rowNum) {
+    this.colNum = colNum;
+    this.rowNum = rowNum;
+    updatePageCount();
+    setPageShow();
+  }
+
   // =========================================================================
   // 翻页
   // =========================================================================

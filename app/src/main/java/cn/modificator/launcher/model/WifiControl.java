@@ -14,9 +14,8 @@ import android.util.Log;
 import android.view.View;
 
 import java.io.File;
-import java.util.List;
+import java.util.Map;
 
-import cn.modificator.launcher.Config;
 import cn.modificator.launcher.R;
 import cn.modificator.launcher.widgets.ObserverFontTextView;
 import cn.modificator.launcher.widgets.RatioImageView;
@@ -40,8 +39,7 @@ public class WifiControl {
   private int showNameRes;
   private int showIconRes;
   private String connectWifiName;
-  private List<String> iconReplacePkg;
-  private List<File> iconReplaceFile;
+  private Map<String, File> iconReplaceMap;
 
   private static WifiControl instance;
 
@@ -62,14 +60,13 @@ public class WifiControl {
     appContext.registerReceiver(wifiStateReceiver, filter);
   }
 
-  public static void bind(View view, List<String> iconReplacePkg, List<File> iconReplaceFile) {
+  public static void bind(View view, Map<String, File> iconReplaceMap) {
     if (view == null) {
       instance.appImage = null;
       instance.appName = null;
       return;
     }
-    instance.iconReplacePkg = iconReplacePkg;
-    instance.iconReplaceFile = iconReplaceFile;
+    instance.iconReplaceMap = iconReplaceMap;
     instance.appName = view.findViewById(R.id.appName);
     instance.appImage = view.findViewById(R.id.appImage);
     instance.updateStatus();
@@ -93,10 +90,9 @@ public class WifiControl {
     appName.setText(appContext.getString(showNameRes, connectWifiName));
 
     String fileName = showIconRes == R.drawable.wifi_on ? WIFI_ON_RES_NAME : WIFI_OFF_RES_NAME;
-    int index = iconReplacePkg != null ? iconReplacePkg.indexOf(fileName) : -1;
-    Config config = new Config(appContext);
-    if (config.isShowCustomIcon() && index > 0) {
-      appImage.setImageURI(Uri.fromFile(iconReplaceFile.get(index)));
+    File replaceFile = iconReplaceMap != null ? iconReplaceMap.get(fileName) : null;
+    if (replaceFile != null) {
+      appImage.setImageURI(Uri.fromFile(replaceFile));
     } else {
       appImage.setImageResource(showIconRes);
     }

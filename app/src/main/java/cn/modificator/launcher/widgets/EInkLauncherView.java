@@ -24,9 +24,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
+import android.graphics.drawable.Drawable;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Observer;
 import java.util.Set;
 
@@ -57,8 +61,10 @@ public class EInkLauncherView extends ViewGroup {
   private boolean isSystemApp = false;
   private final Set<String> hideAppPkg = new HashSet<>();
   private OnSingleAppHideChange onSingleAppHideChange;
-  private final List<File> iconReplaceFile = new ArrayList<>();
-  private final List<String> iconReplacePkg = new ArrayList<>();
+  private final Map<String, File> iconReplaceMap = new HashMap<>();
+  private boolean iconCacheDirty = true;
+  private final Map<String, Drawable> iconCache = new HashMap<>();
+  private final Map<String, CharSequence> labelCache = new HashMap<>();
   private boolean hideDivider = false;
   private Config config;
 
@@ -137,6 +143,24 @@ public class EInkLauncherView extends ViewGroup {
     isSystemApp = systemApp;
   }
 
+  /** 批量设置行列数，只触发一次布局重建 */
+  public void setGridSize(int colNum, int rowNum) {
+    this.colNum = colNum;
+    this.rowNum = rowNum;
+    resetIconLayout();
+  }
+
+  /** 标记自定义图标缓存为脏，下次 refreshReplaceIcon 时重新扫描文件系统 */
+  public void markIconCacheDirty() {
+    iconCacheDirty = true;
+  }
+
+  /** 清除应用图标和标签的内存缓存（应用安装/卸载时调用） */
+  public void clearAppCache() {
+    iconCache.clear();
+    labelCache.clear();
+  }
+
   public void setOnSingleAppHideChangeListener(OnSingleAppHideChange listener) {
     this.onSingleAppHideChange = listener;
   }
@@ -146,37 +170,38 @@ public class EInkLauncherView extends ViewGroup {
   // =========================================================================
 
   public void refreshReplaceIcon() {
-    iconReplaceFile.clear();
-    iconReplacePkg.clear();
+    // 仅在脏标记为 true 时才重新扫描文件系统
+    if (iconCacheDirty) {
+      iconReplaceMap.clear();
 
-    if (getContext().getExternalCacheDir() == null || config.isShowCustomIcon()) {
-      refreshIconData();
-      return;
-    }
+      if (getContext().getExternalCacheDir() != null && !config.isShowCustomIcon()) {
+        File iconFileRoot;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+          iconFileRoot = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+              "E-Ink Launcher" + File.separator + "icon");
+        } else {
+          iconFileRoot = new File(Environment.getExternalStorageDirectory(),
+              "E-Ink Launcher" + File.separator + "icon");
+        }
 
-    File iconFileRoot;
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-      iconFileRoot = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-          "E-Ink Launcher" + File.separator + "icon");
-    } else {
-      iconFileRoot = new File(Environment.getExternalStorageDirectory(),
-          "E-Ink Launcher" + File.separator + "icon");
-    }
+        if (!iconFileRoot.exists()) {
+          try {
+            iconFileRoot.mkdirs();
+          } catch (Exception ignored) {
+          }
+        }
 
-    if (!iconFileRoot.exists()) {
-      try {
-        iconFileRoot.mkdirs();
-      } catch (Exception ignored) {
+        File[] files = iconFileRoot.listFiles();
+        if (files != null) {
+          for (File file : files) {
+            String name = file.getName();
+            int dotIndex = name.lastIndexOf(".");
+            String pkg = dotIndex > 0 ? name.substring(0, dotIndex) : name;
+            iconReplaceMap.put(pkg, file);
+          }
+        }
       }
-    }
-
-    if (iconFileRoot.listFiles() != null) {
-      for (File file : iconFileRoot.listFiles()) {
-        iconReplaceFile.add(file);
-        String name = file.getName();
-        int dotIndex = name.lastIndexOf(".");
-        iconReplacePkg.add(dotIndex > 0 ? name.substring(0, dotIndex) : name);
-      }
+      iconCacheDirty = false;
     }
     refreshIconData();
   }
@@ -256,13 +281,26 @@ public class EInkLauncherView extends ViewGroup {
   // =========================================================================
 
   private void resetIconLayout() {
+    int targetCount = rowNum * colNum;
+    int currentCount = getChildCount();
+
+    if (currentCount == targetCount) {
+      // 子 View 数量未变，仅更新背景即可
+      for (int i = 0; i < targetCount; i++) {
+        getChildAt(i).setBackgroundResource(getItemBackground(i));
+      }
+      refreshIconData();
+      return;
+    }
+
+    // 子 View 数量发生变化，完整重建
     fontSizeObservable.deleteObservers();
     removeAllViews();
 
     int appNameLines = config.getAppNameLines();
     float currentFontSize = config.getFontSize();
 
-    for (int i = 0; i < rowNum * colNum; i++) {
+    for (int i = 0; i < targetCount; i++) {
       View itemView = LayoutInflater.from(getContext()).inflate(R.layout.launcher_item, this, false);
       fontSizeObservable.addObserver((Observer) itemView.findViewById(R.id.appName));
 
@@ -272,7 +310,6 @@ public class EInkLauncherView extends ViewGroup {
       tvAppName.setMaxLines(appNameLines);
       tvAppName.setEllipsize(TextUtils.TruncateAt.END);
 
-      // 设置网格边框：隐藏分隔线时全部用无边框样式
       itemView.setBackgroundResource(getItemBackground(i));
       addView(itemView);
     }
@@ -295,7 +332,7 @@ public class EInkLauncherView extends ViewGroup {
   }
 
   private void refreshIconData() {
-    WifiControl.bind(null, iconReplacePkg, iconReplaceFile);
+    WifiControl.bind(null, iconReplaceMap);
 
     for (int i = 0; i < rowNum; i++) {
       for (int j = 0; j < colNum; j++) {
@@ -319,38 +356,56 @@ public class EInkLauncherView extends ViewGroup {
     TextView appName = itemView.findViewById(R.id.appName);
 
     if (AppDataCenter.WIFI_PACKAGE_NAME.equals(packageName)) {
-      WifiControl.bind(itemView, iconReplacePkg, iconReplaceFile);
+      WifiControl.bind(itemView, iconReplaceMap);
     } else if (AppDataCenter.LOCK_PACKAGE_NAME.equals(packageName)) {
       setIconWithReplacement(appImage, packageName, R.drawable.ic_onekeylock);
       appName.setText(R.string.item_lockscreen);
     } else {
       setIconWithReplacement(appImage, packageName, dataList.get(position));
-      appName.setText(dataList.get(position).loadLabel(packageManager));
+      // 带缓存的标签加载
+      CharSequence label = labelCache.get(packageName);
+      if (label == null) {
+        label = dataList.get(position).loadLabel(packageManager);
+        labelCache.put(packageName, label);
+      }
+      appName.setText(label);
     }
 
-    itemView.setOnClickListener(new ItemClickListener(position));
-    itemView.setOnLongClickListener(new ItemLongClickListener(position));
-    itemView.findViewById(R.id.menu_delete).setOnClickListener(new ItemClickListener(position));
-    itemView.findViewById(R.id.menu_hide).setOnClickListener(new ItemHideClickListener(position));
+    // 通过 tag 传递位置，复用单例监听器
+    itemView.setTag(position);
+    itemView.setOnClickListener(itemClickListener);
+    itemView.setOnLongClickListener(itemLongClickListener);
+    View menuDelete = itemView.findViewById(R.id.menu_delete);
+    menuDelete.setTag(position);
+    menuDelete.setOnClickListener(itemClickListener);
+    View menuHide = itemView.findViewById(R.id.menu_hide);
+    menuHide.setTag(position);
+    menuHide.setOnClickListener(hideClickListener);
     itemView.setVisibility(VISIBLE);
     itemView.setAlpha(1);
   }
 
   private void setIconWithReplacement(ImageView imageView, String packageName, int defaultRes) {
-    int index = iconReplacePkg.indexOf(packageName);
-    if (index >= 0) {
-      imageView.setImageURI(Uri.fromFile(iconReplaceFile.get(index)));
+    File replaceFile = iconReplaceMap.get(packageName);
+    if (replaceFile != null) {
+      imageView.setImageURI(Uri.fromFile(replaceFile));
     } else {
       imageView.setImageResource(defaultRes);
     }
   }
 
   private void setIconWithReplacement(ImageView imageView, String packageName, ResolveInfo info) {
-    int index = iconReplacePkg.indexOf(packageName);
-    if (index >= 0) {
-      imageView.setImageURI(Uri.fromFile(iconReplaceFile.get(index)));
+    File replaceFile = iconReplaceMap.get(packageName);
+    if (replaceFile != null) {
+      imageView.setImageURI(Uri.fromFile(replaceFile));
     } else {
-      imageView.setImageDrawable(info.loadIcon(packageManager));
+      // 带缓存的图标加载
+      Drawable cached = iconCache.get(packageName);
+      if (cached == null) {
+        cached = info.loadIcon(packageManager);
+        iconCache.put(packageName, cached);
+      }
+      imageView.setImageDrawable(cached);
     }
   }
 
@@ -470,18 +525,13 @@ public class EInkLauncherView extends ViewGroup {
   }
 
   // =========================================================================
-  // 点击事件处理
+  // 点击事件处理（单例监听器 + tag 传递位置，避免每次刷新创建新对象）
   // =========================================================================
 
-  private class ItemClickListener implements OnClickListener {
-    private final int position;
-
-    ItemClickListener(int position) {
-      this.position = position;
-    }
-
+  private final OnClickListener itemClickListener = new OnClickListener() {
     @Override
     public void onClick(View v) {
+      int position = (int) v.getTag();
       if (position >= dataList.size()) return;
 
       if (isDelete) {
@@ -507,17 +557,12 @@ public class EInkLauncherView extends ViewGroup {
         v.getContext().startActivity(intent);
       }
     }
-  }
+  };
 
-  private class ItemLongClickListener implements OnLongClickListener {
-    private final int position;
-
-    ItemLongClickListener(int position) {
-      this.position = position;
-    }
-
+  private final OnLongClickListener itemLongClickListener = new OnLongClickListener() {
     @Override
     public boolean onLongClick(View v) {
+      int position = (int) v.getTag();
       if (position >= dataList.size()) return false;
 
       final String packageName = dataList.get(position).activityInfo.packageName;
@@ -527,71 +572,17 @@ public class EInkLauncherView extends ViewGroup {
       } else if (AppDataCenter.WIFI_PACKAGE_NAME.equals(packageName)) {
         WifiControl.onLongClickWifiItem();
       } else {
-        showAppInfoDialog(v, packageName);
+        showAppInfoDialog(v, position, packageName);
       }
       return true;
     }
+  };
 
-    private void showPowerMenu(View v) {
-      if (!isSystemApp) return;
-      new AlertDialog.Builder(v.getContext())
-          .setTitle(R.string.power_title)
-          .setItems(R.array.power_menu, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              if (which == 0) {
-                Intent intent = new Intent("android.intent.action.ACTION_REQUEST_SHUTDOWN");
-                intent.putExtra("android.intent.extra.KEY_CONFIRM", false);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                getContext().startActivity(intent);
-              } else {
-                PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
-                pm.reboot("重启");
-              }
-            }
-          })
-          .setPositiveButton(R.string.dialog_cancel, null)
-          .show();
-    }
-
-    private void showAppInfoDialog(View v, final String packageName) {
-      new AlertDialog.Builder(v.getContext())
-          .setIcon(dataList.get(position).loadIcon(packageManager))
-          .setTitle(dataList.get(position).loadLabel(packageManager))
-          .setMessage(getResources().getString(R.string.dialog_pkg_name, packageName))
-          .setPositiveButton(R.string.dialog_cancel, null)
-          .setNeutralButton(R.string.dialog_hide, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              if (onSingleAppHideChange != null) {
-                if (!hideAppPkg.add(packageName)) {
-                  hideAppPkg.remove(packageName);
-                }
-                onSingleAppHideChange.change(packageName);
-              }
-            }
-          })
-          .setNegativeButton(R.string.dialog_uninstall, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              Intent deleteIntent = new Intent(Intent.ACTION_DELETE,
-                  Uri.parse("package:" + packageName));
-              getContext().startActivity(deleteIntent);
-            }
-          })
-          .show();
-    }
-  }
-
-  private class ItemHideClickListener implements OnClickListener {
-    private final int position;
-
-    ItemHideClickListener(int position) {
-      this.position = position;
-    }
-
+  private final OnClickListener hideClickListener = new OnClickListener() {
     @Override
     public void onClick(View v) {
+      int position = (int) v.getTag();
+      if (position >= dataList.size()) return;
       String pkg = dataList.get(position).activityInfo.packageName;
       if (hideAppPkg.contains(pkg)) {
         v.setSelected(false);
@@ -601,6 +592,60 @@ public class EInkLauncherView extends ViewGroup {
         hideAppPkg.add(pkg);
       }
     }
+  };
+
+  // =========================================================================
+  // 对话框
+  // =========================================================================
+
+  private void showPowerMenu(View v) {
+    if (!isSystemApp) return;
+    new AlertDialog.Builder(v.getContext())
+        .setTitle(R.string.power_title)
+        .setItems(R.array.power_menu, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            if (which == 0) {
+              Intent intent = new Intent("android.intent.action.ACTION_REQUEST_SHUTDOWN");
+              intent.putExtra("android.intent.extra.KEY_CONFIRM", false);
+              intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+              getContext().startActivity(intent);
+            } else {
+              PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
+              pm.reboot("重启");
+            }
+          }
+        })
+        .setPositiveButton(R.string.dialog_cancel, null)
+        .show();
+  }
+
+  private void showAppInfoDialog(View v, int position, final String packageName) {
+    new AlertDialog.Builder(v.getContext())
+        .setIcon(dataList.get(position).loadIcon(packageManager))
+        .setTitle(dataList.get(position).loadLabel(packageManager))
+        .setMessage(getResources().getString(R.string.dialog_pkg_name, packageName))
+        .setPositiveButton(R.string.dialog_cancel, null)
+        .setNeutralButton(R.string.dialog_hide, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            if (onSingleAppHideChange != null) {
+              if (!hideAppPkg.add(packageName)) {
+                hideAppPkg.remove(packageName);
+              }
+              onSingleAppHideChange.change(packageName);
+            }
+          }
+        })
+        .setNegativeButton(R.string.dialog_uninstall, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            Intent deleteIntent = new Intent(Intent.ACTION_DELETE,
+                Uri.parse("package:" + packageName));
+            getContext().startActivity(deleteIntent);
+          }
+        })
+        .show();
   }
 
   // =========================================================================
