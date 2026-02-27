@@ -53,6 +53,7 @@ public class Launcher extends Activity {
   public static final String LAUNCHER_ACTION = "launcherReceiver";
   public static final String LAUNCHER_FONT_SIZE = "launcherFontSize";
   public static final String LAUNCHER_HIDE_DIVIDER = "launcherHideDivider";
+  private static final int REQUEST_DEVICE_ADMIN = 10001;
 
   EInkLauncherView launcherView;
   AppDataCenter dataCenter = null;
@@ -69,6 +70,16 @@ public class Launcher extends Activity {
   File iconFile;
   boolean isChina = true;
   FTPReceiver ftpReceiver = new FTPReceiver();
+  private boolean batteryRegistered;
+  private boolean timeRegistered;
+  private boolean usbRegistered;
+  private boolean ftpRegistered;
+  private final BroadcastReceiver timeListener = new BroadcastReceiver() {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      updateTimeShow();
+    }
+  };
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -209,23 +220,8 @@ public class Launcher extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
-    IntentFilter batteryLevelFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-    registerReceiver(batteryLevelRcvr, batteryLevelFilter);
-    timeListener = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        updateTimeShow();
-      }
-    };
-    updateTimeShow();
-
-    registerReceiver(timeListener, new IntentFilter(Intent.ACTION_TIME_TICK));
+    registerDynamicReceivers();
     if (launcherView != null) launcherView.refreshReplaceIcon();
-    detectionUSB();
-
-    IntentFilter ftpIntentFilter = new IntentFilter(FTPService.ACTION_START_FTPSERVER);
-    ftpIntentFilter.addAction(FTPService.ACTION_STOP_FTPSERVER);
-    registerReceiver(ftpReceiver,ftpIntentFilter);
   }
 
   /**
@@ -256,22 +252,15 @@ public class Launcher extends Activity {
   @Override
   protected void onPause() {
     super.onPause();
-    unregisterReceiver(batteryLevelRcvr);
-    unregisterReceiver(timeListener);
-    unregisterReceiver(usbReceiver);
-    unregisterReceiver(ftpReceiver);
+    unregisterDynamicReceivers();
   }
 
   @Override
   protected void onDestroy() {
     super.onDestroy();
+    unregisterDynamicReceivers();
     unregisterReceiver(updateReceiver);
     unregisterReceiver(appChangeReceiver);
-    try {
-      unregisterReceiver(usbReceiver);
-    } catch (Throwable throwable) {
-      throwable.printStackTrace();
-    }
   }
 
 
@@ -280,6 +269,9 @@ public class Launcher extends Activity {
     @Override
     public void onReceive(Context context, Intent intent) {
       Bundle bundle = intent.getExtras();
+      if (bundle == null) {
+        return;
+      }
       if (bundle.containsKey(ROW_NUM_KEY)) {
         updateRowNum(bundle.getInt(ROW_NUM_KEY));
       } else if (bundle.containsKey(COL_NUM_KEY)) {
@@ -376,6 +368,47 @@ public class Launcher extends Activity {
     }
   };
 
+  private void registerDynamicReceivers() {
+    if (!batteryRegistered) {
+      IntentFilter batteryLevelFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+      registerReceiver(batteryLevelRcvr, batteryLevelFilter);
+      batteryRegistered = true;
+    }
+    if (!timeRegistered) {
+      registerReceiver(timeListener, new IntentFilter(Intent.ACTION_TIME_TICK));
+      timeRegistered = true;
+    }
+    updateTimeShow();
+    if (!usbRegistered) {
+      detectionUSB();
+    }
+    if (!ftpRegistered) {
+      IntentFilter ftpIntentFilter = new IntentFilter(FTPService.ACTION_START_FTPSERVER);
+      ftpIntentFilter.addAction(FTPService.ACTION_STOP_FTPSERVER);
+      registerReceiver(ftpReceiver, ftpIntentFilter);
+      ftpRegistered = true;
+    }
+  }
+
+  private void unregisterDynamicReceivers() {
+    if (batteryRegistered) {
+      unregisterReceiver(batteryLevelRcvr);
+      batteryRegistered = false;
+    }
+    if (timeRegistered) {
+      unregisterReceiver(timeListener);
+      timeRegistered = false;
+    }
+    if (usbRegistered) {
+      unregisterReceiver(usbReceiver);
+      usbRegistered = false;
+    }
+    if (ftpRegistered) {
+      unregisterReceiver(ftpReceiver);
+      ftpRegistered = false;
+    }
+  }
+
   private void detectionUSB() {
     IntentFilter usbFilter = new IntentFilter();
     usbFilter.addAction(Intent.ACTION_UMS_DISCONNECTED);
@@ -384,6 +417,7 @@ public class Launcher extends Activity {
     usbFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
     usbFilter.addDataScheme("file");
     registerReceiver(usbReceiver, usbFilter);
+    usbRegistered = true;
   }
 
   private BroadcastReceiver usbReceiver = new BroadcastReceiver() {
@@ -452,7 +486,7 @@ public class Launcher extends Activity {
     intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, new ComponentName(this, AdminReceiver.class));
     intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "E-Ink Launcher 获取锁屏权限");
     startActivity(intent);
-//    startActivityForResult(intent, 10001);
+//    startActivityForResult(intent, REQUEST_DEVICE_ADMIN);
   }
 
   @Override
@@ -460,7 +494,7 @@ public class Launcher extends Activity {
     super.onActivityResult(requestCode, resultCode, data);
     if (resultCode == RESULT_OK) {
       switch (requestCode) {
-        case 10001:
+        case REQUEST_DEVICE_ADMIN:
           policyManager.lockNow();
           break;
       }
@@ -481,7 +515,8 @@ public class Launcher extends Activity {
 
   public void toggleStatusBar(){
     int windowFlags= WindowManager.LayoutParams.FLAG_FULLSCREEN;
-    if (Config.showStatusBar){
+    boolean showStatusBar = config.getStatusBarShowStatus();
+    if (showStatusBar){
       getWindow().setFlags(windowFlags,windowFlags);
     }else{
       getWindow().clearFlags(windowFlags);

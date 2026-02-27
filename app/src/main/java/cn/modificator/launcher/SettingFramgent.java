@@ -24,8 +24,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import java.util.Observable;
-
 import cn.modificator.launcher.ftpservice.FTPService;
 import cn.modificator.launcher.model.AdminReceiver;
 import cn.modificator.launcher.model.WifiControl;
@@ -40,6 +38,7 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
   SeekBar font_control;
   View rootView;
   TextView hideDivider, ftpAddr, ftpStatus,showStatusBar,showCustomIcon;
+  private Config config;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -55,6 +54,7 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     rootView = getView();
+    config = new Config(getActivity());
     rootView.findViewById(R.id.toBack).setOnClickListener(this);
     rootView.findViewById(R.id.rootView).setOnClickListener(this);
     rootView.findViewById(R.id.deleteApp).setOnClickListener(this);
@@ -73,11 +73,12 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
     hideDivider.setOnClickListener(this);
     showCustomIcon.setOnClickListener(this);
     rootView.findViewById(R.id.openDeviceManager).setOnClickListener(this);
-    showStatusBar.getPaint().setStrikeThruText(Config.showStatusBar);
-    hideDivider.getPaint().setStrikeThruText(Config.hideDivider);
-    row_num_spinner.setSelection(Config.rowNum - 2, false);
-    font_control.setProgress((int) ((Config.fontSize - 10) * 10));
-    showCustomIcon.getPaint().setStrikeThruText(Config.showCustomIcon);
+    showStatusBar.getPaint().setStrikeThruText(config.getStatusBarShowStatus());
+    hideDivider.getPaint().setStrikeThruText(config.getDividerHideStatus());
+    hideDivider.setText(Config.hideDivider ? "显示分隔线" : "隐藏分隔线");
+    row_num_spinner.setSelection(config.getRowNum() - 2, false);
+    font_control.setProgress((int) ((config.getFontSize() - 10) * 10));
+    showCustomIcon.getPaint().setStrikeThruText(config.getCustomIconShowStatus());
 
     row_num_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override
@@ -85,6 +86,7 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
         Intent intent = new Intent();
         intent.putExtra(Launcher.ROW_NUM_KEY, position + 2);
         intent.setAction(Launcher.LAUNCHER_ACTION);
+        config.setRowNum(position + 2);
         getActivity().sendBroadcast(intent);
       }
 
@@ -93,13 +95,14 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
 
       }
     });
-    col_num_spinner.setSelection(Config.colNum - 2, false);
+    col_num_spinner.setSelection(config.getColNum() - 2, false);
     col_num_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         Intent intent = new Intent();
         intent.putExtra(Launcher.COL_NUM_KEY, position + 2);
         intent.setAction(Launcher.LAUNCHER_ACTION);
+        config.setColNum(position + 2);
         getActivity().sendBroadcast(intent);
       }
 
@@ -115,6 +118,7 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
         Intent intent = new Intent();
         intent.putExtra(Launcher.APP_NAME_SHOW_LINES, position);
         intent.setAction(Launcher.LAUNCHER_ACTION);
+        config.setAppNameLines(position);
         getActivity().sendBroadcast(intent);
       }
 
@@ -136,6 +140,7 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
           Config.fontSize = 10 + progress / 10f;
           intent.putExtra(Launcher.LAUNCHER_FONT_SIZE, 10 + progress / 10f);
           intent.setAction(Launcher.LAUNCHER_ACTION);
+          config.saveFontSize();
           getActivity().sendBroadcast(intent);
         }
       }
@@ -153,7 +158,10 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
   }
 
   private int getAppLineSpinnerSelectPosition(){
-    if (Config.appNameLines<3)return Config.appNameLines;
+    int lines = config.getAppNameLines();
+    if (lines < 3) {
+      return lines;
+    }
     return 3;
   }
 
@@ -171,6 +179,7 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
       } else if (id == R.id.showStatusBar) {
           Intent intent;
           Config.showStatusBar = !Config.showStatusBar;
+          config.setStatusBarShowStatus(Config.showStatusBar);
 
           intent = new Intent(Launcher.LAUNCHER_ACTION);
           intent.putExtra(Launcher.LAUNCHER_SHOW_STATUS_BAR, Config.showStatusBar);
@@ -187,6 +196,7 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
       } else if (id == R.id.hideDivider) {
           Intent intent;
           Config.hideDivider = !Config.hideDivider;
+          config.setDividerHideStatus(Config.hideDivider);
           hideDivider.setText(Config.hideDivider ? "显示分隔线" : "隐藏分隔线");
 
           intent = new Intent();
@@ -217,6 +227,7 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
               @Override
               public void run() {
                   Config.showCustomIcon = !Config.showCustomIcon;
+                  config.setCustomIconShowStatus(Config.showCustomIcon);
                   Intent intent = new Intent(Launcher.LAUNCHER_ACTION);
                   intent.putExtra(Launcher.LAUNCHER_SHOW_CUSTOM_ICON, Config.showCustomIcon);
                   getActivity().sendBroadcast(intent);
@@ -282,7 +293,12 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
 //                ftpAddr.setText("网络传书 （开）");
         ftpStatus.setText(R.string.setting_cloud_manager_on);
         ftpAddr.setVisibility(View.VISIBLE);
-        ftpAddr.setText(getFTPAddressString());
+        String address = getFTPAddressString();
+        if (address != null) {
+          ftpAddr.setText(address);
+        } else {
+          ftpAddr.setVisibility(View.GONE);
+        }
       } else {
 //                ftpAddr.setText("网络传书 （关）");
         ftpStatus.setText(R.string.setting_cloud_manager_off);
@@ -299,6 +315,9 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
    * @return address at which server is running
    */
   private String getFTPAddressString() {
+    if (FTPService.getLocalInetAddress(getActivity()) == null) {
+      return null;
+    }
     return "ftp://" + FTPService.getLocalInetAddress(getActivity()).getHostAddress() + ":" + FTPService.getPort();
   }
 
@@ -322,17 +341,17 @@ public class SettingFramgent extends Fragment implements View.OnClickListener {
     public void onReceive(Context context, Intent intent) {
       String action = intent.getAction();
       updateStatus();
-      if (action == FTPService.ACTION_STARTED) {
+      if (FTPService.ACTION_STARTED.equals(action)) {
 //                statusText.setText(getResources().getString(R.string.ftp_status_running));
 //                warningText.setText("");
 //                ftpAddrText.setText(getFTPAddressString());
 //                ftpBtn.setText(getResources().getString(R.string.stop_ftp));
-      } else if (action == FTPService.ACTION_FAILEDTOSTART) {
+      } else if (FTPService.ACTION_FAILEDTOSTART.equals(action)) {
 //                statusText.setText(getResources().getString(R.string.ftp_status_not_running));
 //                warningText.setText("Oops! Something went wrong");
 //                ftpAddrText.setText("");
 //                ftpBtn.setText(getResources().getString(R.string.start_ftp));
-      } else if (action == FTPService.ACTION_STOPPED) {
+      } else if (FTPService.ACTION_STOPPED.equals(action)) {
 //                statusText.setText(getResources().getString(R.string.ftp_status_not_running));
 //                ftpAddrText.setText("");
 //                ftpBtn.setText(getResources().getString(R.string.start_ftp));
