@@ -3,25 +3,25 @@ package cn.modificator.launcher.widgets;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.text.TextPaint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import cn.modificator.launcher.R;
 
 /**
- * Created by mod on 16-4-25.
+ * 圆形电量指示 View。
+ * 外圈弧线表示当前电量百分比，中心显示数字。
  */
-
 public class BatteryView extends View {
-  Paint circlePaint;
-  TextPaint textPaint;
-  int maxProgress = 100;
-  int progress = 0;
+
+  private final Paint circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+  private final TextPaint textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+
+  private int maxProgress = 100;
+  private int progress = 0;
 
   public BatteryView(Context context) {
     super(context);
@@ -39,35 +39,39 @@ public class BatteryView extends View {
   }
 
   private void init() {
-    circlePaint = new Paint();
     circlePaint.setStyle(Paint.Style.STROKE);
-    circlePaint.setAntiAlias(true);
-    textPaint = new TextPaint();
-    textPaint.setColor(getResources().getColor(R.color.textColor));
-    textPaint.setAntiAlias(true);
+    textPaint.setColor(0xff000000);
   }
 
   @Override
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
-    int size = getWidth() > getHeight() ? getHeight() : getWidth();
-    circlePaint.setStrokeWidth(size / 10);
-    circlePaint.setColor(getResources().getColor(R.color.menuBgColor));
-    canvas.drawCircle(getWidth() / 2, getHeight() / 2, (size - circlePaint.getStrokeWidth()) / 2, circlePaint);
-    RectF rectF = new RectF(
-        (getWidth() - size + circlePaint.getStrokeWidth()) / 2,
-        (getHeight() - size + circlePaint.getStrokeWidth()) / 2,
-        (getWidth() - size - circlePaint.getStrokeWidth()) / 2 + size,
-        (getHeight() - size - circlePaint.getStrokeWidth()) / 2 + size
+    int size = Math.min(getWidth(), getHeight());
+    float strokeWidth = size / 10f;
+    circlePaint.setStrokeWidth(strokeWidth);
+
+    // 画灰色背景圆环
+    circlePaint.setColor(0xffcccccc);
+    canvas.drawCircle(getWidth() / 2f, getHeight() / 2f, (size - strokeWidth) / 2f, circlePaint);
+
+    // 画黑色电量弧线
+    RectF arcRect = new RectF(
+        (getWidth() - size + strokeWidth) / 2f,
+        (getHeight() - size + strokeWidth) / 2f,
+        (getWidth() - size - strokeWidth) / 2f + size,
+        (getHeight() - size - strokeWidth) / 2f + size
     );
-    circlePaint.setColor(getResources().getColor(R.color.textColor));
-    canvas.drawArc(rectF, -90, progress * 1f / maxProgress * 360, false, circlePaint);
+    circlePaint.setColor(0xff000000);
+    float sweepAngle = progress * 1f / maxProgress * 360;
+    canvas.drawArc(arcRect, -90, sweepAngle, false, circlePaint);
+
+    // 画中心文字
     textPaint.setTextSize(size / 2.8f);
     drawText(canvas);
   }
 
   private void drawText(Canvas canvas) {
-    String showText = String.format("%02d", (int) Math.round(progress * 1f / maxProgress * 100));
+    String showText = String.format("%02d", Math.round(progress * 1f / maxProgress * 100));
     Rect rect = new Rect();
     textPaint.getTextBounds(showText, 0, showText.length(), rect);
     textPaint.setFakeBoldText(true);
@@ -86,40 +90,4 @@ public class BatteryView extends View {
     this.progress = progress;
     invalidate();
   }
-    /*private void drawChargeIcon(Canvas canvas) {
-        Paint paint = new Paint();
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(0xff000000);
-        int size = getHeight();
-        float margin = size * 0.2f;
-        Path path = new Path();
-        path.moveTo(size / 3f+margin, 0+margin);
-        path.lineTo(size / 3f * 2-margin, 0+margin);
-        path.lineTo(size * 0.45f, size * 0.45f);
-        path.lineTo(size * 0.8f, size * 0.45f);
-        path.lineTo(size * 0.25f, size);
-        path.lineTo(size * 0.45f, size * 0.55f);
-        path.lineTo(size * 0.25f, size * 0.55f);*//*
-        path.moveTo(size / 3f, 0);
-        path.lineTo(size / 3f * 2, 0);
-        path.lineTo(size * 0.45f, size * 0.45f);
-        path.lineTo(size * 0.8f, size * 0.45f);
-        path.lineTo(size * 0.25f, size);
-        path.lineTo(size * 0.45f, size * 0.55f);
-        path.lineTo(size * 0.25f, size * 0.55f);*//*
-        path.close();
-        canvas.drawPath(path, paint);
-
-    }*/
-
-  @Override
-  protected void onWindowVisibilityChanged(int visibility) {
-    super.onWindowVisibilityChanged(visibility);
-    if (visibility == VISIBLE) {
-
-    } else {
-
-    }
-  }
-
 }

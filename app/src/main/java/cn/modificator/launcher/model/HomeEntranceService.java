@@ -15,8 +15,8 @@ import cn.modificator.launcher.R;
 
 public class HomeEntranceService extends Service {
 
-    public static final String HomeEntranceChannelId = "Back to Launcher";
-    public static final String HomeEntranceChannelName = "Back to Launcher Notification";
+    private static final String CHANNEL_ID = "Back to Launcher";
+    private static final String CHANNEL_NAME = "Back to Launcher Notification";
 
     @Override
     public void onCreate() {
@@ -24,13 +24,13 @@ public class HomeEntranceService extends Service {
         if (Build.VERSION.SDK_INT>=26){
             NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm != null) {
-                nm.createNotificationChannel(new NotificationChannel(HomeEntranceChannelId,HomeEntranceChannelName,NotificationManager.IMPORTANCE_LOW));
+                nm.createNotificationChannel(new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW));
             }
         }
 
         Notification.Builder builder;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            builder = new Notification.Builder(this,HomeEntranceChannelId);
+            builder = new Notification.Builder(this, CHANNEL_ID);
         }else{
             builder = new Notification.Builder(this);
         }
@@ -38,9 +38,10 @@ public class HomeEntranceService extends Service {
         startForeground(1, builder
                 .setWhen(System.currentTimeMillis())
                 .setContentTitle(getString(R.string.notification_click_back_launcher))
-                .setContentIntent(PendingIntent.getActivity(this,10,new Intent(this, Launcher.class),Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED))
+                .setContentIntent(PendingIntent.getActivity(this, 10, new Intent(this, Launcher.class),
+                    PendingIntent.FLAG_IMMUTABLE | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED))
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .getNotification()
+                .build()
         );
     }
 

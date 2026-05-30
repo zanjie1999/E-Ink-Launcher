@@ -7,166 +7,209 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by mod on 16-4-23.
+ * 应用配置管理类。
+ * 统一管理 SharedPreferences 的读写，缓存常用配置值。
+ * 偏好键（KEY_*）集中定义于此类。
  */
 public class Config {
-  Context context;
-  //列数
-  public static int colNum = -1;
-  //行数
-  public static int rowNum = -1;
 
-  public static int themeMode = -1;
-  public static float fontSize = -1;
-  public static int appNameLines = Integer.MAX_VALUE;
-  public static boolean hideDivider = false;
-  public static boolean showStatusBar = false;
-  public static boolean showCustomIcon = false;
-  private String preferencesFileName = "launcherPropertyFile";
-  private Set<String> hideApps = new HashSet<>();
+  // ---- 偏好键常量 ----
+  public static final String KEY_COL_NUM = "colNumKey";
+  public static final String KEY_ROW_NUM = "rowNumKey";
+  public static final String KEY_APP_NAME_LINES = "appNameShowLines";
+  public static final String KEY_HIDE_APPS = "hideAppsKey";
+  public static final String KEY_FONT_SIZE = "launcherFontSize";
+  public static final String KEY_HIDE_DIVIDER = "launcherHideDivider";
+  public static final String KEY_SHOW_STATUS_BAR = "launcherShowStatusBar";
+  public static final String KEY_SHOW_CUSTOM_ICON = "launcherShowCustomIcon";
+  public static final String KEY_SORT_MODE = "launcherSortMode";
+  public static final String KEY_THEME_MODE = "themeMode";
+
+  // ---- 默认值 ----
+  private static final int DEFAULT_COL_NUM = 5;
+  private static final int DEFAULT_ROW_NUM = 5;
+  private static final float DEFAULT_FONT_SIZE = 14f;
+  private static final int DEFAULT_APP_NAME_LINES = Integer.MAX_VALUE;
+  private static final boolean DEFAULT_HIDE_DIVIDER = true;
+  private static final boolean DEFAULT_SHOW_STATUS_BAR = true;
+  private static final boolean DEFAULT_SHOW_CUSTOM_ICON = false;
+  private static final int DEFAULT_SORT_MODE = 0;
+  private static final int DEFAULT_THEME_MODE = 0;
+
+  private static final String PREFS_FILE = "launcherPropertyFile";
+
+  private final SharedPreferences prefs;
+
+  // ---- 缓存字段 ----
+  private int colNum = -1;
+  private int rowNum = -1;
+  private float fontSize = -1;
+  private int appNameLines = -1;
+  private boolean hideDivider;
+  private boolean showStatusBar;
+  private boolean showCustomIcon;
+  private int sortMode = -1;
+  private int themeMode = -1;
+  private final Set<String> hideApps = new HashSet<>();
+  private boolean hideAppsLoaded = false;
 
   public Config(Context context) {
-    this.context = context;
-    getCustomIconShowStatus();
-    getDividerHideStatus();
-    getStatusBarShowStatus();
-    getAppNameLines();
+    this.prefs = context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE);
+    // 预加载布尔配置
+    this.hideDivider = prefs.getBoolean(KEY_HIDE_DIVIDER, DEFAULT_HIDE_DIVIDER);
+    this.showStatusBar = prefs.getBoolean(KEY_SHOW_STATUS_BAR, DEFAULT_SHOW_STATUS_BAR);
+    this.showCustomIcon = prefs.getBoolean(KEY_SHOW_CUSTOM_ICON, DEFAULT_SHOW_CUSTOM_ICON);
+    this.appNameLines = prefs.getInt(KEY_APP_NAME_LINES, DEFAULT_APP_NAME_LINES);
   }
+
+  // ---- 列数 ----
 
   public int getColNum() {
     if (colNum == -1) {
-      SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-      colNum = preferences.getInt(Launcher.COL_NUM_KEY, 5);
+      colNum = prefs.getInt(KEY_COL_NUM, DEFAULT_COL_NUM);
     }
     return colNum;
   }
 
   public void setColNum(int colNum) {
-    if (this.colNum == colNum)
-      return;
+    if (this.colNum == colNum) return;
     this.colNum = colNum;
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putInt(Launcher.COL_NUM_KEY, colNum).apply();
-
+    prefs.edit().putInt(KEY_COL_NUM, colNum).apply();
   }
+
+  // ---- 行数 ----
 
   public int getRowNum() {
     if (rowNum == -1) {
-      SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-      rowNum = preferences.getInt(Launcher.ROW_NUM_KEY, 5);
+      rowNum = prefs.getInt(KEY_ROW_NUM, DEFAULT_ROW_NUM);
     }
     return rowNum;
   }
 
   public void setRowNum(int rowNum) {
-    if (this.rowNum == rowNum)
-      return;
+    if (this.rowNum == rowNum) return;
     this.rowNum = rowNum;
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putInt(Launcher.ROW_NUM_KEY, rowNum).apply();
+    prefs.edit().putInt(KEY_ROW_NUM, rowNum).apply();
   }
 
-  public void setColRowNum(int colNum, int rowNum) {
-    if (this.colNum == colNum && this.rowNum == rowNum)
-      return;
-    this.colNum = colNum;
-    this.rowNum = rowNum;
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putInt(Launcher.COL_NUM_KEY, colNum).putInt(Launcher.ROW_NUM_KEY, rowNum).apply();
-  }
+  // ---- 主题模式 ----
 
   public int getThemeMode() {
     if (themeMode == -1) {
-      SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-      themeMode = preferences.getInt(Launcher.THEME_MODE_KEY, 0);
+      themeMode = prefs.getInt(KEY_THEME_MODE, DEFAULT_THEME_MODE);
     }
     return themeMode;
   }
 
-
   public void setThemeMode(int themeMode) {
-    if (this.themeMode == themeMode)
-      return;
+    if (this.themeMode == themeMode) return;
     this.themeMode = themeMode;
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putInt(Launcher.THEME_MODE_KEY, themeMode).apply();
+    prefs.edit().putInt(KEY_THEME_MODE, themeMode).apply();
   }
 
+  // ---- 隐藏应用 ----
+
   public void addHideApp(String packageName) {
+    ensureHideAppsLoaded();
     hideApps.add(packageName);
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putStringSet(Launcher.HIDE_APPS_KEY, hideApps).apply();
+    prefs.edit().putStringSet(KEY_HIDE_APPS, hideApps).apply();
   }
 
   public void removeHideApp(String packageName) {
+    ensureHideAppsLoaded();
     hideApps.remove(packageName);
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putStringSet(Launcher.HIDE_APPS_KEY, hideApps).apply();
+    prefs.edit().putStringSet(KEY_HIDE_APPS, hideApps).apply();
   }
 
   public void setHideApps(Set<String> hideApps) {
     this.hideApps.clear();
     this.hideApps.addAll(hideApps);
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putStringSet(Launcher.HIDE_APPS_KEY, this.hideApps).apply();
+    this.hideAppsLoaded = true;
+    prefs.edit().putStringSet(KEY_HIDE_APPS, this.hideApps).apply();
   }
 
   public Set<String> getHideApps() {
-    if (hideApps.isEmpty()) {
-      hideApps.addAll(context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE).getStringSet(Launcher.HIDE_APPS_KEY, new HashSet<String>()));
-    }
+    ensureHideAppsLoaded();
     return hideApps;
   }
 
+  private void ensureHideAppsLoaded() {
+    if (!hideAppsLoaded) {
+      hideApps.addAll(prefs.getStringSet(KEY_HIDE_APPS, new HashSet<String>()));
+      hideAppsLoaded = true;
+    }
+  }
+
+  // ---- 字体大小 ----
+
   public float getFontSize() {
-    if (fontSize == -1) {
-      fontSize = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE).getFloat(Launcher.LAUNCHER_FONT_SIZE, 14);
+    if (fontSize < 0) {
+      fontSize = prefs.getFloat(KEY_FONT_SIZE, DEFAULT_FONT_SIZE);
     }
     return fontSize;
   }
 
-  public void saveFontSize() {
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putFloat(Launcher.LAUNCHER_FONT_SIZE, fontSize).apply();
+  public void setFontSize(float fontSize) {
+    this.fontSize = fontSize;
+    prefs.edit().putFloat(KEY_FONT_SIZE, fontSize).apply();
   }
 
-  public boolean getDividerHideStatus() {
-    return hideDivider = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE).getBoolean(Launcher.LAUNCHER_HIDE_DIVIDER, true);
+  // ---- 分隔线 ----
+
+  public boolean isHideDivider() {
+    return hideDivider;
   }
 
-  public void setDividerHideStatus(boolean b) {
-    hideDivider = b;
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putBoolean(Launcher.LAUNCHER_HIDE_DIVIDER, b).apply();
+  public void setHideDivider(boolean hide) {
+    this.hideDivider = hide;
+    prefs.edit().putBoolean(KEY_HIDE_DIVIDER, hide).apply();
   }
 
-  public boolean getStatusBarShowStatus(){
-    return showStatusBar = context.getSharedPreferences(preferencesFileName,Context.MODE_PRIVATE).getBoolean(Launcher.LAUNCHER_SHOW_STATUS_BAR,true);
+  // ---- 状态栏 ----
+
+  public boolean isShowStatusBar() {
+    return showStatusBar;
   }
 
-  public void setStatusBarShowStatus(boolean b){
-    showStatusBar = b;
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putBoolean(Launcher.LAUNCHER_SHOW_STATUS_BAR, b).apply();
+  public void setShowStatusBar(boolean show) {
+    this.showStatusBar = show;
+    prefs.edit().putBoolean(KEY_SHOW_STATUS_BAR, show).apply();
   }
 
-  public boolean getCustomIconShowStatus(){
-    return showCustomIcon = context.getSharedPreferences(preferencesFileName,Context.MODE_PRIVATE).getBoolean(Launcher.LAUNCHER_SHOW_CUSTOM_ICON,false);
+  // ---- 自定义图标 ----
+
+  public boolean isShowCustomIcon() {
+    return showCustomIcon;
   }
 
-  public void setCustomIconShowStatus(boolean b){
-    showCustomIcon = b;
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putBoolean(Launcher.LAUNCHER_SHOW_CUSTOM_ICON, b).apply();
+  public void setShowCustomIcon(boolean show) {
+    this.showCustomIcon = show;
+    prefs.edit().putBoolean(KEY_SHOW_CUSTOM_ICON, show).apply();
   }
 
-  public void setAppNameLines(int lineNum){
-    appNameLines = lineNum;
-    SharedPreferences preferences = context.getSharedPreferences(preferencesFileName, Context.MODE_PRIVATE);
-    preferences.edit().putInt(Launcher.APP_NAME_SHOW_LINES, lineNum).apply();
+  // ---- 应用名行数 ----
+
+  public int getAppNameLines() {
+    return appNameLines;
   }
 
-  public int getAppNameLines(){
-    return appNameLines = context.getSharedPreferences(preferencesFileName,Context.MODE_PRIVATE).getInt(Launcher.APP_NAME_SHOW_LINES,Integer.MAX_VALUE);
+  public void setAppNameLines(int lines) {
+    this.appNameLines = lines;
+    prefs.edit().putInt(KEY_APP_NAME_LINES, lines).apply();
+  }
+
+  // ---- 排序方式 ----
+
+  public int getSortMode() {
+    if (sortMode == -1) {
+      sortMode = prefs.getInt(KEY_SORT_MODE, DEFAULT_SORT_MODE);
+    }
+    return sortMode;
+  }
+
+  public void setSortMode(int mode) {
+    if (this.sortMode == mode) return;
+    this.sortMode = mode;
+    prefs.edit().putInt(KEY_SORT_MODE, mode).apply();
   }
 }

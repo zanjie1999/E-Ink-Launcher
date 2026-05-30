@@ -7,11 +7,8 @@ import java.io.Serializable;
 import java.util.Observable;
 
 /**
- * Created by Modificator
- * time: 16/12/3.上午2:00
- * des:create file and achieve model
+ * 可观察的 float 包装类，值变化时通知观察者。
  */
-
 public class ObservableFloat extends Observable implements Parcelable, Serializable {
   static final long serialVersionUID = 1L;
   private float mValue;
@@ -28,10 +25,11 @@ public class ObservableFloat extends Observable implements Parcelable, Serializa
   }
 
   public void set(float value) {
-    if (mValue != value)
+    if (mValue != value) {
       this.mValue = value;
-    notifyObservers(mValue);
+    }
     setChanged();
+    notifyObservers(mValue);
   }
 
   @Override

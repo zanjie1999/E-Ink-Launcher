@@ -18,6 +18,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
 
     <application
         android:name=".App"
@@ -27,6 +28,22 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <activity
+            android:name="cn.modificator.launcher.Launcher"
+            android:launchMode="singleInstance"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category
+                    android:name="com.yotadevices.intent.category.EPD_HOME" />
+            </intent-filter>
+            <meta-data android:name="com.yotadevices.keep_on_epd_screen" android:value="true"/>
+        </activity>
+
         <meta-data
             android:name="app_description_title"
             android:resource="@string/app_name" />
@@ -34,7 +51,6 @@
         <meta-data
             android:name="app_description_content"
             android:resource="@string/uninstall_tip" />
-
 
         <service
             android:name=".ftpservice.FTPService"

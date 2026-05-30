@@ -28,4 +28,14 @@
         <item>2 line</item>
         <item>no limit</item>
     </string-array>
+    <string-array name="sort_modes">
+        <item>Name ↑</item>
+        <item>Name ↓</item>
+        <item>Install time ↑</item>
+        <item>Install time ↓</item>
+        <item>Usage time ↑</item>
+        <item>Usage time ↓</item>
+        <item>Recent access ↑</item>
+        <item>Recent access ↓</item>
+    </string-array>
 </resources>

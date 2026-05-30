@@ -50,6 +50,7 @@
     <string name="wifi_status_disconnecting">WiFi 断开中</string>
 
     <string name="item_lockscreen">一键锁屏</string>
+    <string name="item_clear">内存清理</string>
 
     <string-array name="power_menu">
         <item>关机</item>
@@ -73,7 +74,12 @@
     <string name="show_wifi_name">显示WiFi名字</string>
     <string name="notification_click_back_launcher">点击这里回到桌面</string>
     <string name="app_show_name">App 名字</string>
+    <string name="setting_sort_mode">排序方式</string>
+    <string name="sort_need_usage_permission">此排序模式需要授予使用情况访问权限</string>
     <string name="launch_failed">启动失败</string>
     <string name="launch_devicemanager">打开设备管理器</string>
     <string name="launch_devicemanager_failed">请打开设备管理器并启用 咩E-Ink Launcher</string>
+    <string name="clean_start">开始清理…</string>
+    <string name="clean_error">清理出错：%s</string>
+    <string name="clean_done">已清理：%s</string>
 </resources>

@@ -1,7 +1,6 @@
 package cn.modificator.launcher;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -19,23 +18,18 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 
 import androidx.annotation.Nullable;
 
 public class CrashDetailPage extends Activity {
 
-  private TextView btnReLaunch, tvContent;
-  private Context mContext;
+  private TextView btnReLaunch;
+  private TextView tvContent;
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    mContext = this;
     initViews();
   }
 
@@ -71,7 +65,7 @@ public class CrashDetailPage extends Activity {
     btnReLaunch.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Intent intent = new Intent(mContext, Launcher.class);
+        Intent intent = new Intent(CrashDetailPage.this, Launcher.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();

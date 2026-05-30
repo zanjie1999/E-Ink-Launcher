@@ -9,26 +9,18 @@ import android.widget.ImageView;
 import cn.modificator.launcher.R;
 
 /**
- * Created by mod on 15-10-30.
+ * 按照宽高比例自适应尺寸的 ImageView。
+ * 以 {@link ReferenceType} 指定的边为基准，另一边按比例计算。
  */
 public class RatioImageView extends ImageView {
 
-  /**
-   * 以哪边为参考，默认为宽
-   */
-  ReferenceType reference = ReferenceType.WIDTH;
-  /**
-   * 宽的比例
-   */
-  double ratioWidth = 1;
-  /**
-   * 高的比例
-   */
-  double ratioHeight = 1;
+  private ReferenceType reference = ReferenceType.WIDTH;
+  private double ratioWidth = 1;
+  private double ratioHeight = 1;
 
   public enum ReferenceType {
     WIDTH,
-    ReferenceType, HEIGHT
+    HEIGHT
   }
 
   public RatioImageView(Context context) {
@@ -37,47 +29,42 @@ public class RatioImageView extends ImageView {
 
   public RatioImageView(Context context, AttributeSet attrs) {
     super(context, attrs);
-    TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.RatioLayout, 0, 0);
-    //获取参考边
-    reference = typedArray.getInt(R.styleable.RatioLayout_reference, 0) == 0 ? ReferenceType.WIDTH : ReferenceType.HEIGHT;
-    //获取高比例
-    ratioHeight = typedArray.getFloat(R.styleable.RatioLayout_ratioHeight, 1);
-    //获取宽比例
-    ratioWidth = typedArray.getFloat(R.styleable.RatioLayout_ratioWidth, 1);
-    typedArray.recycle();
+    initAttrs(context, attrs, 0);
   }
 
   public RatioImageView(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
-    TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.RatioLayout, defStyleAttr, 0);
-    //获取参考边
-    reference = typedArray.getInt(R.styleable.RatioLayout_reference, 0) == 0 ? ReferenceType.WIDTH : ReferenceType.HEIGHT;
-    //获取高比例
-    ratioHeight = typedArray.getFloat(R.styleable.RatioLayout_ratioHeight, 1);
-    //获取宽比例
-    ratioWidth = typedArray.getFloat(R.styleable.RatioLayout_ratioWidth, 1);
-    typedArray.recycle();
+    initAttrs(context, attrs, defStyleAttr);
+  }
+
+  private void initAttrs(Context context, AttributeSet attrs, int defStyleAttr) {
+    TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.RatioLayout, defStyleAttr, 0);
+    reference = ta.getInt(R.styleable.RatioLayout_reference, 0) == 0
+        ? ReferenceType.WIDTH : ReferenceType.HEIGHT;
+    ratioHeight = ta.getFloat(R.styleable.RatioLayout_ratioHeight, 1);
+    ratioWidth = ta.getFloat(R.styleable.RatioLayout_ratioWidth, 1);
+    ta.recycle();
   }
 
   @Override
   protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-    /**
-     * 如果以宽慰基准边则宽不变，高按比例得出具体数值，反之亦然
-     */
-    setMeasuredDimension(View.getDefaultSize(0, reference == ReferenceType.WIDTH ? widthMeasureSpec :
-            (int) (heightMeasureSpec / ratioHeight * ratioWidth)),
-        View.getDefaultSize(0, reference == ReferenceType.HEIGHT ? heightMeasureSpec :
-            (int) (widthMeasureSpec / ratioWidth * ratioHeight)));
+    boolean widthBased = (reference == ReferenceType.WIDTH);
 
-    int childSpec = reference == ReferenceType.WIDTH ? getMeasuredWidth() : getMeasuredHeight();
-    /**
-     * 获取非基准边的尺寸
-     */
-    int measureSpec = reference == ReferenceType.HEIGHT ? View.MeasureSpec.makeMeasureSpec(
-        (int) (childSpec / ratioHeight * ratioWidth), View.MeasureSpec.EXACTLY) :
-        View.MeasureSpec.makeMeasureSpec(
-            (int) (childSpec / ratioWidth * ratioHeight), View.MeasureSpec.EXACTLY);
+    setMeasuredDimension(
+        View.getDefaultSize(0, widthBased ? widthMeasureSpec
+            : (int) (heightMeasureSpec / ratioHeight * ratioWidth)),
+        View.getDefaultSize(0, !widthBased ? heightMeasureSpec
+            : (int) (widthMeasureSpec / ratioWidth * ratioHeight))
+    );
 
-    super.onMeasure(reference == ReferenceType.WIDTH ? widthMeasureSpec : measureSpec, reference == ReferenceType.HEIGHT ? heightMeasureSpec : measureSpec);
+    int baseSize = widthBased ? getMeasuredWidth() : getMeasuredHeight();
+    int otherSpec = widthBased
+        ? View.MeasureSpec.makeMeasureSpec((int) (baseSize / ratioWidth * ratioHeight), View.MeasureSpec.EXACTLY)
+        : View.MeasureSpec.makeMeasureSpec((int) (baseSize / ratioHeight * ratioWidth), View.MeasureSpec.EXACTLY);
+
+    super.onMeasure(
+        widthBased ? widthMeasureSpec : otherSpec,
+        widthBased ? otherSpec : heightMeasureSpec
+    );
   }
 }

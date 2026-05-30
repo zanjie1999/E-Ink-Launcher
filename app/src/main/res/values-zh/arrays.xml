@@ -28,4 +28,14 @@
         <item>两行</item>
         <item>不限制</item>
     </string-array>
+    <string-array name="sort_modes">
+        <item>名称 ↑</item>
+        <item>名称 ↓</item>
+        <item>安装时间 ↑</item>
+        <item>安装时间 ↓</item>
+        <item>使用时长 ↑</item>
+        <item>使用时长 ↓</item>
+        <item>最近访问 ↑</item>
+        <item>最近访问 ↓</item>
+    </string-array>
 </resources>

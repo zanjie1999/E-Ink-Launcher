@@ -55,6 +55,7 @@
     <string name="wifi_status_disconnecting">WiFi disconnecting</string>
 
     <string name="item_lockscreen">Lock Screen</string>
+    <string name="item_clear">Memory Clean</string>
     <string name="launch_failed">Launch failed</string>
     <string name="launch_devicemanager_failed">Please open Device Policy Manager and enable 咩E-Ink Launcher</string>
     <string name="launch_devicemanager">Open Device Policy Manager</string>
@@ -86,4 +87,9 @@
         <item>纯白背景</item>
         <item>纯黑背景</item>
     </string-array>
+    <string name="setting_sort_mode">Sort</string>
+    <string name="sort_need_usage_permission">Please grant usage access permission for this sort mode</string>
+    <string name="clean_start">Start cleaning…</string>
+    <string name="clean_error">Clean error: %s</string>
+    <string name="clean_done">Cleaned: %s</string>
 </resources>
