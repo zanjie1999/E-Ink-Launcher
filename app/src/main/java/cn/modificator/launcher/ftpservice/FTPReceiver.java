@@ -7,6 +7,7 @@ package cn.modificator.launcher.ftpservice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 
 public class FTPReceiver extends BroadcastReceiver {
@@ -21,7 +22,11 @@ public class FTPReceiver extends BroadcastReceiver {
       if (intent.getAction().equals(FTPService.ACTION_START_FTPSERVER)) {
         Intent serverService = new Intent(context, FTPService.class);
         if (!FTPService.isRunning()) {
-          context.startService(serverService);
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(serverService);
+          } else {
+            context.startService(serverService);
+          }
         }
       } else if (intent.getAction().equals(FTPService.ACTION_STOP_FTPSERVER)) {
         Intent serverService = new Intent(context, FTPService.class);

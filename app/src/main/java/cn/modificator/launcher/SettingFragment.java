@@ -420,10 +420,12 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
 
   private void startFtpServer() {
     getActivity().sendBroadcast(new Intent(FTPService.ACTION_START_FTPSERVER));
+    updateFtpStatus();
   }
 
   private void stopFtpServer() {
     getActivity().sendBroadcast(new Intent(FTPService.ACTION_STOP_FTPSERVER));
+    updateFtpStatus();
   }
 
   private void updateFtpStatus() {
@@ -448,11 +450,11 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   }
 
   private String getFTPAddressString() {
-    if (FTPService.getLocalInetAddress(getActivity()) == null) {
+    java.net.InetAddress address = FTPService.getLocalInetAddress(getActivity());
+    if (address == null) {
       return null;
     }
-    return "ftp://" + FTPService.getLocalInetAddress(getActivity()).getHostAddress()
-        + ":" + FTPService.getPort();
+    return "ftp://" + address.getHostAddress() + ":" + FTPService.getPort();
   }
 
   // =========================================================================
@@ -474,6 +476,9 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   private final BroadcastReceiver ftpReceiver = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
+      if (FTPService.ACTION_FAILEDTOSTART.equals(intent.getAction())) {
+        Toast.makeText(getActivity(), "网络传书启动失败", Toast.LENGTH_SHORT).show();
+      }
       updateFtpStatus();
     }
   };

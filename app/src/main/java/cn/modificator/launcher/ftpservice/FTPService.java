@@ -5,6 +5,9 @@ package cn.modificator.launcher.ftpservice;
  */
 
 import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -13,12 +16,14 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import org.apache.ftpserver.DataConnectionConfigurationFactory;
 import org.apache.ftpserver.ConnectionConfigFactory;
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
@@ -41,10 +46,15 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
+import cn.modificator.launcher.R;
+
 public class FTPService extends Service implements Runnable {
 
   public static final int DEFAULT_PORT = 4567;
   public static final String PORT_PREFERENCE_KEY = "ftpPort";
+  private static final int NOTIFICATION_ID = 2333;
+  private static final String NOTIFICATION_CHANNEL_ID = "ftp_service";
+  private static final String PASSIVE_PORTS = "50000-50009";
 
   // Service will (global) broadcast when server start/stop
   public static final String ACTION_STARTED = "cn.modificator.launcher.ftpservice.FTPReceiver.FTPSERVER_STARTED";
@@ -76,17 +86,18 @@ public class FTPService extends Service implements Runnable {
   /**
    * TODO: 25/10/16 This is ugly
    */
-  private static int port = 2333;
+  private static int port = DEFAULT_PORT;
 
   private String username, password;
   private boolean isPasswordProtected = false;
   protected boolean shouldExit = false;
 
-  private FtpServer server;
+  private static FtpServer server;
   protected static Thread serverThread = null;
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
+    startForegroundCompat();
     shouldExit = false;
     int attempts = 10;
     while (serverThread != null) {
@@ -150,6 +161,18 @@ public class FTPService extends Service implements Runnable {
     port = getDefaultPortFromPreferences(preferences);
 
     fac.setPort(port);
+    InetAddress localAddress = getLocalInetAddress(this);
+    if (localAddress != null) {
+      String hostAddress = localAddress.getHostAddress();
+      fac.setServerAddress(hostAddress);
+
+      DataConnectionConfigurationFactory dataConnectionFactory = new DataConnectionConfigurationFactory();
+      dataConnectionFactory.setPassivePorts(PASSIVE_PORTS);
+      dataConnectionFactory.setPassiveAddress(hostAddress);
+      dataConnectionFactory.setPassiveExternalAddress(hostAddress);
+      dataConnectionFactory.setPassiveIpCheck(false);
+      fac.setDataConnectionConfiguration(dataConnectionFactory.createDataConnectionConfiguration());
+    }
 
     serverFactory.addListener("default", fac.createListener());
     try {
@@ -158,7 +181,15 @@ public class FTPService extends Service implements Runnable {
       sendBroadcast(new Intent(FTPService.ACTION_STARTED));
     } catch (Exception e) {
       e.printStackTrace();
+      server = null;
+      serverThread = null;
+      stopForegroundCompat();
       sendBroadcast(new Intent(FTPService.ACTION_FAILEDTOSTART));
+      stopSelf();
+    } finally {
+      if (server == null || server.isStopped()) {
+        serverThread = null;
+      }
     }
   }
 
@@ -166,25 +197,25 @@ public class FTPService extends Service implements Runnable {
   public void onDestroy() {
     Log.i(TAG, "onDestroy() Stopping server");
     shouldExit = true;
-    if (serverThread == null) {
-      Log.w(TAG, "Stopping with null serverThread");
-      return;
-    }
-    serverThread.interrupt();
-    try {
-      serverThread.join(10000); // wait 10 sec for server thread to finish
-    } catch (InterruptedException e) {
-    }
-    if (serverThread.isAlive()) {
-      Log.w(TAG, "Server thread failed to exit");
-    } else {
-      Log.d(TAG, "serverThread join()ed ok");
-      serverThread = null;
+    if (serverThread != null) {
+      serverThread.interrupt();
+      try {
+        serverThread.join(10000); // wait 10 sec for server thread to finish
+      } catch (InterruptedException e) {
+      }
+      if (serverThread.isAlive()) {
+        Log.w(TAG, "Server thread failed to exit");
+      } else {
+        Log.d(TAG, "serverThread join()ed ok");
+        serverThread = null;
+      }
     }
     if (server != null) {
       server.stop();
+      server = null;
       sendBroadcast(new Intent(FTPService.ACTION_STOPPED));
     }
+    stopForegroundCompat();
     Log.d(TAG, "FTPServerService.onDestroy() finished");
   }
 
@@ -206,17 +237,41 @@ public class FTPService extends Service implements Runnable {
 
 
   public static boolean isRunning() {
-    // return true if and only if a server Thread is running
-    if (serverThread == null) {
-      Log.d(TAG, "Server is not running (null serverThread)");
+    if (server == null || server.isStopped()) {
+      Log.d(TAG, "Server is not running");
       return false;
     }
-    if (!serverThread.isAlive()) {
-      Log.d(TAG, "serverThread non-null but !isAlive()");
-    } else {
-      Log.d(TAG, "Server is alive");
-    }
+    Log.d(TAG, "Server is alive");
     return true;
+  }
+
+  private void startForegroundCompat() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+
+    NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    if (manager != null) {
+      NotificationChannel channel = new NotificationChannel(
+          NOTIFICATION_CHANNEL_ID,
+          "FTP Service",
+          NotificationManager.IMPORTANCE_LOW);
+      manager.createNotificationChannel(channel);
+    }
+
+    Notification notification = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+        .setSmallIcon(R.mipmap.ic_launcher)
+        .setContentTitle(getString(R.string.app_name))
+        .setContentText("网络传书已开启")
+        .setOngoing(true)
+        .build();
+    startForeground(NOTIFICATION_ID, notification);
+  }
+
+  private void stopForegroundCompat() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      stopForeground(STOP_FOREGROUND_REMOVE);
+    } else {
+      stopForeground(true);
+    }
   }
 
   public static void sleepIgnoreInterupt(long millis) {

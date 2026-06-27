@@ -159,8 +159,8 @@ public class EInkLauncherView extends ViewGroup {
   @Override
   protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    int w = getAdjustedWidth();
-    int h = getAdjustedHeight();
+    int w = getMeasuredWidth() - getPaddingLeft() - getPaddingRight();
+    int h = getMeasuredHeight() - getPaddingTop() - getPaddingBottom();
     if (w <= 0 || h <= 0) return;
 
     int cellWSpec = makeMeasureSpec(w / colNum, EXACTLY);

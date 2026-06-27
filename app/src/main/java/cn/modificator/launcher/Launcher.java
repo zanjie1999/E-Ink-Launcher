@@ -251,13 +251,13 @@ public class Launcher extends AppCompatActivity
     // 初始化数据中心
     dataCenter = new AppDataCenter(this);
     dataCenter.setSortMode(config.getSortMode());
-    dataCenter.setHideApps(config.getHideApps());
     dataCenter.setPageStatus(pageStatus);
-    dataCenter.setAdapter(adapter);
 
     // 一次性配置网格参数，避免多次重建
     launcherView.configure(config.getColNum(), config.getRowNum(), config.isHideDivider());
     dataCenter.setGridSize(config.getColNum(), config.getRowNum());
+    dataCenter.setAdapter(adapter);
+    dataCenter.setHideApps(config.getHideApps());
 
     // 翻页按钮
     findViewById(R.id.lastPage).setOnClickListener(new View.OnClickListener() {

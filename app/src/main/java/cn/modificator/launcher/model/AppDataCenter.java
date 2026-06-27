@@ -211,6 +211,7 @@ public class AppDataCenter {
   }
 
   private void setPageShow() {
+    if (adapter == null || pageStatus == null) return;
     int itemCount = colNum * rowNum;
     int pageStart = pageIndex * itemCount;
     int pageEnd = Math.min(pageStart + itemCount, mApps.size());
