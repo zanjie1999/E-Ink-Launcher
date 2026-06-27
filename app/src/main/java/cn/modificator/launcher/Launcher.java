@@ -667,7 +667,7 @@ public class Launcher extends AppCompatActivity
     }
 
     if (keyCode == KeyEvent.KEYCODE_BACK) {
-      showFirstPageAndSelectFirst();
+      showFirstPageAndKeepFocusState();
       return true;
     } else if (keyCode == KeyEvent.KEYCODE_PAGE_UP) {
       showLastPageAndSelectFirst();
@@ -874,9 +874,15 @@ public class Launcher extends AppCompatActivity
     }
   }
 
-  private void showFirstPageAndSelectFirst() {
+  private void showFirstPageAndKeepFocusState() {
+    boolean hadKeyboardFocus = focusArea != FOCUS_NONE;
     dataCenter.showFirstPage();
-    focusGrid(0);
+    if (hadKeyboardFocus) {
+      focusGrid(0);
+    } else {
+      launcherView.selectFirstAvailable();
+      clearKeyboardFocus();
+    }
   }
 
   private void showNextPageAndHideSelection() {

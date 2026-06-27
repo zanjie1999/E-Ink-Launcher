@@ -9,8 +9,8 @@ import android.view.ViewGroup;
 import cn.modificator.launcher.R;
 
 import static android.view.View.MeasureSpec.EXACTLY;
+import static android.view.View.MeasureSpec.getSize;
 import static android.view.View.MeasureSpec.makeMeasureSpec;
-import static androidx.core.content.ContextCompat.getSystemService;
 
 /**
  * E-Ink 桌面网格布局 ViewGroup。
@@ -144,23 +144,28 @@ public class EInkLauncherView extends ViewGroup {
     swipeThreshold = Math.min(w, h) / 6f;
     int cellW = w / colNum;
     int cellH = h / rowNum;
+    int startLeft = getPaddingLeft();
+    int startTop = getPaddingTop();
 
     for (int row = 0; row < rowNum; row++) {
       for (int col = 0; col < colNum; col++) {
         int index = row * colNum + col;
         if (index >= getChildCount()) return;
         getChildAt(index).layout(
-            col * cellW, row * cellH,
-            (col + 1) * cellW, (row + 1) * cellH);
+            startLeft + col * cellW, startTop + row * cellH,
+            startLeft + (col + 1) * cellW, startTop + (row + 1) * cellH);
       }
     }
   }
 
   @Override
   protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    int w = getMeasuredWidth() - getPaddingLeft() - getPaddingRight();
-    int h = getMeasuredHeight() - getPaddingTop() - getPaddingBottom();
+    int measuredWidth = getSize(widthMeasureSpec);
+    int measuredHeight = getSize(heightMeasureSpec);
+    setMeasuredDimension(measuredWidth, measuredHeight);
+
+    int w = measuredWidth - getPaddingLeft() - getPaddingRight();
+    int h = measuredHeight - getPaddingTop() - getPaddingBottom();
     if (w <= 0 || h <= 0) return;
 
     int cellWSpec = makeMeasureSpec(w / colNum, EXACTLY);
@@ -186,7 +191,7 @@ public class EInkLauncherView extends ViewGroup {
     if (adapter == null) return;
     int targetCount = rowNum * colNum;
 
-    if (adapter.getHolderCount() == targetCount) {
+    if (adapter.getHolderCount() == targetCount && getChildCount() == targetCount) {
       // 数量不变，仅刷新背景
       for (int i = 0; i < targetCount; i++) {
         getChildAt(i).setBackgroundResource(getItemBackground(i));
@@ -213,6 +218,8 @@ public class EInkLauncherView extends ViewGroup {
       adapter.bindAll();
       normalizeSelection();
       adapter.updateSelection(selectedIndex, selectionVisible);
+      requestLayout();
+      invalidate();
     }
   }
 

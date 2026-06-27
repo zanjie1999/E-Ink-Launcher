@@ -70,6 +70,7 @@ public class AppDataCenter {
     this.hideApps.clear();
     this.hideApps.addAll(hideApps);
     loadApps();
+    setPageShow();
   }
 
   public Set<String> getHideApps() {
