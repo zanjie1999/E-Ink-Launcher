@@ -347,6 +347,7 @@ public class Launcher extends AppCompatActivity
   @Override
   public void onShowStatusBarChanged(boolean show) {
     applyStatusBarVisibility();
+    recreate();
   }
 
   @Override
@@ -370,8 +371,8 @@ public class Launcher extends AppCompatActivity
 
   @Override
   public void onThemeModeChanged(int mode) {
-    config.setThemeMode(mode);
     setThemeMode(mode);
+    recreate();
   }
 
   // =========================================================================
