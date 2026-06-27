@@ -122,16 +122,25 @@ public class AppDataCenter {
   // 翻页
   // =========================================================================
 
-  public void showNextPage() {
-    if (pageIndex >= pageCount) return;
+  public boolean showNextPage() {
+    if (pageIndex >= pageCount) return false;
     pageIndex++;
     setPageShow();
+    return true;
   }
 
-  public void showLastPage() {
-    if (pageIndex <= 0) return;
+  public boolean showLastPage() {
+    if (pageIndex <= 0) return false;
     pageIndex--;
     setPageShow();
+    return true;
+  }
+
+  public boolean showFirstPage() {
+    if (pageIndex == 0) return false;
+    pageIndex = 0;
+    setPageShow();
+    return true;
   }
 
   // =========================================================================

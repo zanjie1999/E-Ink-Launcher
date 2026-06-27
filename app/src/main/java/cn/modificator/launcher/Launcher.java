@@ -23,6 +23,7 @@ import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -32,6 +33,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -64,6 +66,7 @@ public class Launcher extends AppCompatActivity
   private BatteryView batteryProgress;
   private TextView batteryStatus;
   private TextView textClock;
+  private ImageView settingIcon;
 
   // ---- Data ----
   private AppDataCenter dataCenter;
@@ -74,9 +77,17 @@ public class Launcher extends AppCompatActivity
   private LauncherAdapter adapter;
   private AppItemBinder binder;
   private boolean isSystemApp = false;
+  private int focusArea = FOCUS_NONE;
+  private int lastGridIndex = 0;
+  private boolean confirmLongPressed = false;
 
   // ---- Device Admin ----
   private DevicePolicyManager policyManager;
+
+  private static final int FOCUS_NONE = 0;
+  private static final int FOCUS_GRID = 1;
+  private static final int FOCUS_BATTERY = 2;
+  private static final int FOCUS_SETTING = 3;
 
   // ---- Receivers ----
   private FTPReceiver ftpReceiver = new FTPReceiver();
@@ -198,6 +209,14 @@ public class Launcher extends AppCompatActivity
     unregisterReceiver(appChangeReceiver);
   }
 
+  @Override
+  public boolean dispatchTouchEvent(MotionEvent ev) {
+    if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
+      clearKeyboardFocus();
+    }
+    return super.dispatchTouchEvent(ev);
+  }
+
   // =========================================================================
   // View 初始化
   // =========================================================================
@@ -211,10 +230,10 @@ public class Launcher extends AppCompatActivity
     batteryStatus = findViewById(R.id.batteryStatus);
     textClock = findViewById(R.id.textClock);
 
-    ImageView settingIcon = findViewById(R.id.toSetting);
+    settingIcon = findViewById(R.id.toSetting);
     settingIcon.setImageDrawable(
         Utils.tintDrawable(getResources().getDrawable(R.drawable.navibar_icon_settings_highlight),
-            ColorStateList.valueOf(0xff000000)));
+            ColorStateList.valueOf(getResources().getColor(R.color.textColor))));
 
     // 配置 Binder、Adapter、View
     iconCache = new IconCache();
@@ -244,13 +263,13 @@ public class Launcher extends AppCompatActivity
     findViewById(R.id.lastPage).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        dataCenter.showLastPage();
+        showLastPageAndHideSelection();
       }
     });
     findViewById(R.id.nextPage).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        dataCenter.showNextPage();
+        showNextPageAndHideSelection();
       }
     });
 
@@ -258,10 +277,8 @@ public class Launcher extends AppCompatActivity
     findViewById(R.id.toSetting).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        getFragmentManager().beginTransaction()
-            .replace(android.R.id.content, new SettingFragment())
-            .addToBackStack(null)
-            .commit();
+        clearKeyboardFocus();
+        openSettingsFragment();
       }
     });
 
@@ -279,14 +296,8 @@ public class Launcher extends AppCompatActivity
     batteryProgress.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Intent intent = new Intent();
-        intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$PowerUsageSummaryActivity"));
-        try {
-          startActivity(intent);
-        } catch (Exception e) {
-          Toast.makeText(Launcher.this, "无法打开电池设置", Toast.LENGTH_SHORT).show();
-          e.printStackTrace();
-        }
+        clearKeyboardFocus();
+        openBatterySettings();
       }
     });
 
@@ -430,12 +441,12 @@ public class Launcher extends AppCompatActivity
 
   @Override
   public void onPageNext() {
-    dataCenter.showNextPage();
+    showNextPageAndHideSelection();
   }
 
   @Override
   public void onPagePrev() {
-    dataCenter.showLastPage();
+    showLastPageAndHideSelection();
   }
 
   private void showPowerMenu() {
@@ -630,24 +641,255 @@ public class Launcher extends AppCompatActivity
 
   @Override
   public boolean onKeyUp(int keyCode, KeyEvent event) {
-    if (keyCode == KeyEvent.KEYCODE_PAGE_UP) {
-      dataCenter.showLastPage();
-      return true;
-    } else if (keyCode == KeyEvent.KEYCODE_PAGE_DOWN) {
-      dataCenter.showNextPage();
-      return true;
-    } else if (keyCode == KeyEvent.KEYCODE_BACK) {
+    if (getFragmentManager().getBackStackEntryCount() != 0 || !isLauncherNavigationKey(keyCode)) {
+      return super.onKeyUp(keyCode, event);
+    }
+    if (isConfirmKey(keyCode)) {
+      if (!confirmLongPressed) {
+        performFocusedClick();
+      }
+      confirmLongPressed = false;
       return true;
     }
-    return super.onKeyUp(keyCode, event);
+    return true;
   }
 
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
-    if (keyCode == KeyEvent.KEYCODE_BACK && getFragmentManager().getBackStackEntryCount() == 0) {
+    boolean hasFragment = getFragmentManager().getBackStackEntryCount() > 0;
+    if (hasFragment) {
+      if (keyCode == KeyEvent.KEYCODE_BACK) {
+        onBackPressed();
+        return true;
+      }
+      return super.onKeyDown(keyCode, event);
+    }
+
+    if (keyCode == KeyEvent.KEYCODE_BACK) {
+      showFirstPageAndSelectFirst();
+      return true;
+    } else if (keyCode == KeyEvent.KEYCODE_PAGE_UP) {
+      showLastPageAndSelectFirst();
+      return true;
+    } else if (keyCode == KeyEvent.KEYCODE_PAGE_DOWN) {
+      showNextPageAndSelectFirst();
+      return true;
+    } else if (isConfirmKey(keyCode)) {
+      event.startTracking();
+      return true;
+    } else if (isDirectionKey(keyCode)) {
+      moveSelectionByKey(keyCode);
       return true;
     }
     return super.onKeyDown(keyCode, event);
+  }
+
+  @Override
+  public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+    if (getFragmentManager().getBackStackEntryCount() == 0 && isConfirmKey(keyCode)) {
+      confirmLongPressed = true;
+      return performFocusedLongClick();
+    }
+    return super.onKeyLongPress(keyCode, event);
+  }
+
+  private boolean isLauncherNavigationKey(int keyCode) {
+    return keyCode == KeyEvent.KEYCODE_BACK
+        || keyCode == KeyEvent.KEYCODE_PAGE_UP
+        || keyCode == KeyEvent.KEYCODE_PAGE_DOWN
+        || isConfirmKey(keyCode)
+        || isDirectionKey(keyCode);
+  }
+
+  private boolean isConfirmKey(int keyCode) {
+    return keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+        || keyCode == KeyEvent.KEYCODE_ENTER
+        || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER;
+  }
+
+  private boolean isDirectionKey(int keyCode) {
+    return keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+        || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+        || keyCode == KeyEvent.KEYCODE_DPAD_UP
+        || keyCode == KeyEvent.KEYCODE_DPAD_DOWN;
+  }
+
+  private void moveSelectionByKey(int keyCode) {
+    if (focusArea == FOCUS_NONE) {
+      focusGrid(launcherView.getSelectedIndex() < 0 ? 0 : launcherView.getSelectedIndex());
+      return;
+    }
+
+    if (focusArea == FOCUS_BATTERY || focusArea == FOCUS_SETTING) {
+      moveFooterFocus(keyCode);
+      return;
+    }
+
+    if (keyCode == KeyEvent.KEYCODE_DPAD_UP && isOnTopRow()) {
+      expandNotifications();
+      return;
+    }
+
+    if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && isOnBottomRow()) {
+      lastGridIndex = launcherView.getSelectedIndex();
+      focusFooter(FOCUS_BATTERY);
+      return;
+    }
+
+    if (launcherView.moveSelection(keyCode)) return;
+
+    int selectedIndex = launcherView.getSelectedIndex();
+    if (selectedIndex < 0) return;
+
+    int colNum = config.getColNum();
+    if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && selectedIndex % colNum == 0) {
+      if (dataCenter.showLastPage()) {
+        launcherView.setSelectedIndex(launcherView.getCrossPageTargetIndex(selectedIndex, false));
+        focusGrid(launcherView.getSelectedIndex());
+      }
+    } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && selectedIndex % colNum == colNum - 1) {
+      if (dataCenter.showNextPage()) {
+        launcherView.setSelectedIndex(launcherView.getCrossPageTargetIndex(selectedIndex, true));
+        focusGrid(launcherView.getSelectedIndex());
+      }
+    }
+  }
+
+  private void moveFooterFocus(int keyCode) {
+    if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+      focusGrid(lastGridIndex);
+    } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && focusArea == FOCUS_BATTERY) {
+      focusFooter(FOCUS_SETTING);
+    } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && focusArea == FOCUS_SETTING) {
+      focusFooter(FOCUS_BATTERY);
+    }
+  }
+
+  private boolean isOnTopRow() {
+    int selectedIndex = launcherView.getSelectedIndex();
+    return selectedIndex >= 0 && selectedIndex < config.getColNum();
+  }
+
+  private boolean isOnBottomRow() {
+    int selectedIndex = launcherView.getSelectedIndex();
+    if (selectedIndex < 0) return false;
+    int colNum = config.getColNum();
+    return selectedIndex + colNum >= launcherView.getDisplayedItemCount();
+  }
+
+  private void performFocusedClick() {
+    if (focusArea == FOCUS_NONE) {
+      focusGrid(launcherView.getSelectedIndex() < 0 ? 0 : launcherView.getSelectedIndex());
+      return;
+    }
+    if (focusArea == FOCUS_GRID) {
+      launcherView.performSelectedItemClick();
+    } else if (focusArea == FOCUS_BATTERY) {
+      batteryProgress.performClick();
+    } else if (focusArea == FOCUS_SETTING) {
+      settingIcon.performClick();
+    }
+  }
+
+  private boolean performFocusedLongClick() {
+    if (focusArea == FOCUS_NONE) {
+      focusGrid(launcherView.getSelectedIndex() < 0 ? 0 : launcherView.getSelectedIndex());
+    }
+    if (focusArea == FOCUS_GRID) {
+      return launcherView.performSelectedItemLongClick();
+    }
+    return false;
+  }
+
+  private void focusGrid(int index) {
+    focusArea = FOCUS_GRID;
+    launcherView.setSelectedIndex(index);
+    launcherView.showSelection();
+    updateFooterFocus();
+  }
+
+  private void focusFooter(int area) {
+    focusArea = area;
+    launcherView.hideSelection();
+    updateFooterFocus();
+  }
+
+  private void clearKeyboardFocus() {
+    focusArea = FOCUS_NONE;
+    confirmLongPressed = false;
+    launcherView.hideSelection();
+    updateFooterFocus();
+  }
+
+  private void updateFooterFocus() {
+    if (batteryProgress != null) {
+      batteryProgress.setSelected(focusArea == FOCUS_BATTERY);
+    }
+    if (settingIcon != null) {
+      settingIcon.setSelected(focusArea == FOCUS_SETTING);
+    }
+  }
+
+  private void openSettingsFragment() {
+    getFragmentManager().beginTransaction()
+        .replace(android.R.id.content, new SettingFragment())
+        .addToBackStack(null)
+        .commit();
+  }
+
+  private void openBatterySettings() {
+    Intent intent = new Intent();
+    intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$PowerUsageSummaryActivity"));
+    try {
+      startActivity(intent);
+    } catch (Exception e) {
+      Toast.makeText(Launcher.this, "无法打开电池设置", Toast.LENGTH_SHORT).show();
+      e.printStackTrace();
+    }
+  }
+
+  private void expandNotifications() {
+    try {
+      Object service = getSystemService("statusbar");
+      if (service == null) return;
+      String methodName = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1
+          ? "expandNotificationsPanel"
+          : "expand";
+      Method method = service.getClass().getMethod(methodName);
+      method.invoke(service);
+    } catch (Exception ignored) {
+    }
+  }
+
+  private void showNextPageAndSelectFirst() {
+    if (dataCenter.showNextPage()) {
+      focusGrid(0);
+    }
+  }
+
+  private void showLastPageAndSelectFirst() {
+    if (dataCenter.showLastPage()) {
+      focusGrid(0);
+    }
+  }
+
+  private void showFirstPageAndSelectFirst() {
+    dataCenter.showFirstPage();
+    focusGrid(0);
+  }
+
+  private void showNextPageAndHideSelection() {
+    if (dataCenter.showNextPage()) {
+      launcherView.selectFirstAvailable();
+      clearKeyboardFocus();
+    }
+  }
+
+  private void showLastPageAndHideSelection() {
+    if (dataCenter.showLastPage()) {
+      launcherView.selectFirstAvailable();
+      clearKeyboardFocus();
+    }
   }
 
   @Override

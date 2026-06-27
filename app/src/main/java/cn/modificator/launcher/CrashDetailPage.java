@@ -79,7 +79,7 @@ public class CrashDetailPage extends Activity {
     tvContent.append(titleSpan);
     tvContent.append("\nーーーーーーーーーーーーーーーーーーーー\n");
     tvContent.append("Please screenshot and give me feedback.\n");
-    tvContent.append("哔哩哔哩：郑羊羊\n");
+    tvContent.append("哔哩哔哩/公众号：郑羊羊\n");
     tvContent.append("酷安：zyyme\n");
     tvContent.append("Github issues : https://github.com/zanjie1999/E-Ink-Launcher\n");
     tvContent.append("well it's already open source\n");

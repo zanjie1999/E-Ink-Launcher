@@ -38,6 +38,7 @@ public class LauncherAdapter {
     public final View menuContainer;
     public final View menuDelete;
     public final View menuHide;
+    public final View focusFrame;
 
     ItemViewHolder(View itemView) {
       this.itemView = itemView;
@@ -46,6 +47,7 @@ public class LauncherAdapter {
       menuContainer = ((ViewGroup) itemView).getChildAt(1);
       menuDelete = itemView.findViewById(R.id.menu_delete);
       menuHide = itemView.findViewById(R.id.menu_hide);
+      focusFrame = itemView.findViewById(R.id.focusFrame);
     }
   }
 
@@ -181,6 +183,23 @@ public class LauncherAdapter {
       binder.bindAll(holders, dataList);
       binder.updateDeleteState(holders, dataList);
     }
+  }
+
+  /** 更新按键导航选中框。 */
+  void updateSelection(int selectedIndex, boolean visible) {
+    for (int i = 0; i < holders.size(); i++) {
+      ItemViewHolder holder = holders.get(i);
+      holder.focusFrame.setVisibility(visible && i == selectedIndex && i < dataList.size()
+          ? View.VISIBLE
+          : View.GONE);
+    }
+  }
+
+  View getItemView(int index) {
+    if (index < 0 || index >= holders.size() || index >= dataList.size()) {
+      return null;
+    }
+    return holders.get(index).itemView;
   }
 
   /** 仅更新管理模式 UI 状态 */

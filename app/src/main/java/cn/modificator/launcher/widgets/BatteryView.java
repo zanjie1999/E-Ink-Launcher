@@ -22,6 +22,8 @@ public class BatteryView extends View {
 
   private int maxProgress = 100;
   private int progress = 0;
+  private int progressColor;
+  private int trackColor;
 
   public BatteryView(Context context) {
     super(context);
@@ -40,7 +42,9 @@ public class BatteryView extends View {
 
   private void init() {
     circlePaint.setStyle(Paint.Style.STROKE);
-    textPaint.setColor(0xff000000);
+    progressColor = getResources().getColor(R.color.textColor);
+    trackColor = getResources().getColor(R.color.batteryTrackColor);
+    textPaint.setColor(progressColor);
   }
 
   @Override
@@ -51,7 +55,7 @@ public class BatteryView extends View {
     circlePaint.setStrokeWidth(strokeWidth);
 
     // 画灰色背景圆环
-    circlePaint.setColor(0xffcccccc);
+    circlePaint.setColor(trackColor);
     canvas.drawCircle(getWidth() / 2f, getHeight() / 2f, (size - strokeWidth) / 2f, circlePaint);
 
     // 画黑色电量弧线
@@ -61,7 +65,7 @@ public class BatteryView extends View {
         (getWidth() - size - strokeWidth) / 2f + size,
         (getHeight() - size - strokeWidth) / 2f + size
     );
-    circlePaint.setColor(0xff000000);
+    circlePaint.setColor(progressColor);
     float sweepAngle = progress * 1f / maxProgress * 360;
     canvas.drawArc(arcRect, -90, sweepAngle, false, circlePaint);
 

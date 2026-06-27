@@ -2,7 +2,9 @@ package cn.modificator.launcher.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import cn.modificator.launcher.R;
 
@@ -45,6 +47,8 @@ public class EInkLauncherView extends ViewGroup {
   // 外部依赖
   private LauncherAdapter adapter;
   private OnPageChangeListener pageChangeListener;
+  private int selectedIndex = -1;
+  private boolean selectionVisible = false;
 
   // 滑动检测
   private float touchDownX;
@@ -207,6 +211,123 @@ public class EInkLauncherView extends ViewGroup {
   void rebind() {
     if (adapter != null) {
       adapter.bindAll();
+      normalizeSelection();
+      adapter.updateSelection(selectedIndex, selectionVisible);
+    }
+  }
+
+  public int getSelectedIndex() {
+    return selectedIndex;
+  }
+
+  public boolean isSelectionVisible() {
+    return selectionVisible;
+  }
+
+  public void setSelectedIndex(int index) {
+    selectedIndex = index;
+    normalizeSelection();
+    updateSelection();
+  }
+
+  public void selectFirstAvailable() {
+    setSelectedIndex(0);
+  }
+
+  public void showSelection() {
+    selectionVisible = true;
+    normalizeSelection();
+    updateSelection();
+  }
+
+  public void hideSelection() {
+    selectionVisible = false;
+    updateSelection();
+  }
+
+  public int getDisplayedItemCount() {
+    return adapter != null ? adapter.getItemCount() : 0;
+  }
+
+  public boolean performSelectedItemClick() {
+    if (adapter == null) return false;
+    normalizeSelection();
+    View selectedView = adapter.getItemView(selectedIndex);
+    return selectedView != null && selectedView.performClick();
+  }
+
+  public boolean performSelectedItemLongClick() {
+    if (adapter == null) return false;
+    normalizeSelection();
+    View selectedView = adapter.getItemView(selectedIndex);
+    return selectedView != null && selectedView.performLongClick();
+  }
+
+  public boolean moveSelection(int keyCode) {
+    if (adapter == null || adapter.getItemCount() == 0) {
+      setSelectedIndex(-1);
+      return false;
+    }
+
+    normalizeSelection();
+    if (selectedIndex < 0) {
+      setSelectedIndex(0);
+      return true;
+    }
+
+    int target = selectedIndex;
+    switch (keyCode) {
+      case KeyEvent.KEYCODE_DPAD_LEFT:
+        if (selectedIndex % colNum == 0) return false;
+        target = selectedIndex - 1;
+        break;
+      case KeyEvent.KEYCODE_DPAD_RIGHT:
+        if (selectedIndex % colNum == colNum - 1 || selectedIndex + 1 >= adapter.getItemCount()) {
+          return false;
+        }
+        target = selectedIndex + 1;
+        break;
+      case KeyEvent.KEYCODE_DPAD_UP:
+        target = selectedIndex - colNum;
+        break;
+      case KeyEvent.KEYCODE_DPAD_DOWN:
+        target = selectedIndex + colNum;
+        break;
+      default:
+        return false;
+    }
+
+    if (target < 0 || target >= adapter.getItemCount()) {
+      return false;
+    }
+    setSelectedIndex(target);
+    return true;
+  }
+
+  public int getCrossPageTargetIndex(int sourceIndex, boolean nextPage) {
+    int itemCount = getDisplayedItemCount();
+    if (itemCount <= 0) return -1;
+
+    int row = Math.max(sourceIndex, 0) / colNum;
+    int target = row * colNum + (nextPage ? 0 : colNum - 1);
+    return Math.min(target, itemCount - 1);
+  }
+
+  private void normalizeSelection() {
+    if (adapter == null || adapter.getItemCount() == 0) {
+      selectedIndex = -1;
+      return;
+    }
+    if (selectedIndex < 0) {
+      selectedIndex = 0;
+    } else if (selectedIndex >= adapter.getItemCount()) {
+      selectedIndex = adapter.getItemCount() - 1;
+    }
+  }
+
+  private void updateSelection() {
+    if (adapter != null) {
+      adapter.updateSelection(selectedIndex, selectionVisible);
     }
   }
 
@@ -231,6 +352,7 @@ public class EInkLauncherView extends ViewGroup {
   public boolean dispatchTouchEvent(MotionEvent event) {
     switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN:
+        hideSelection();
         touchDownX = event.getX();
         touchDownY = event.getY();
         break;

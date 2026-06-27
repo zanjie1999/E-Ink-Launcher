@@ -11,6 +11,7 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.Map;
@@ -99,15 +100,36 @@ public class WifiControl {
   }
 
   public static void onClickWifiItem() {
-    int state = instance.wifiManager.getWifiState();
-    boolean isEnabled = (state == WifiManager.WIFI_STATE_ENABLING || state == WifiManager.WIFI_STATE_ENABLED);
-    instance.wifiManager.setWifiEnabled(!isEnabled);
+    try {
+      int state = instance.wifiManager.getWifiState();
+      boolean isEnabled = (state == WifiManager.WIFI_STATE_ENABLING || state == WifiManager.WIFI_STATE_ENABLED);
+      instance.wifiManager.setWifiEnabled(!isEnabled);
+    } catch (Exception e) {
+      instance.openWifiSettingsFallback();
+    }
   }
 
   public static void onLongClickWifiItem() {
     Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     instance.appContext.startActivity(intent);
+  }
+
+  private void openWifiSettingsFallback() {
+    if (tryStartSettings(Settings.ACTION_WIFI_SETTINGS)) return;
+    if (tryStartSettings(Settings.ACTION_SETTINGS)) return;
+    Toast.makeText(appContext, "打开Wi-Fi设置失败", Toast.LENGTH_SHORT).show();
+  }
+
+  private boolean tryStartSettings(String action) {
+    Intent intent = new Intent(action);
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    try {
+      appContext.startActivity(intent);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   private void applyWifiState(int wifiState) {

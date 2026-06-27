@@ -4,4 +4,7 @@
     <color name="textColor">#ffffff</color>
     <color name="mainBgColor">#4D000000</color>
     <color name="menuBgColor">#B3000000</color>
+    <color name="focusColor">#ffffff</color>
+    <color name="dividerColor">#ffffff</color>
+    <color name="batteryTrackColor">#666666</color>
 </resources>

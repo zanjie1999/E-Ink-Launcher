@@ -9,4 +9,7 @@
     <color name="textColor">#000000</color>
     <color name="mainBgColor">#40FFFFFF</color>
     <color name="menuBgColor">#B3FFFFFF</color>
+    <color name="focusColor">#000000</color>
+    <color name="dividerColor">#000000</color>
+    <color name="batteryTrackColor">#cccccc</color>
 </resources>

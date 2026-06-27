@@ -62,6 +62,12 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   private TextView showStatusBar;
   private TextView showCustomIcon;
   private Config config;
+  private View changeFontSize;
+  private View deleteApp;
+  private View helpAbout;
+  private View menuFtp;
+  private View openDeviceManager;
+  private View showWifiName;
 
   @SuppressWarnings("deprecation")
   @Override
@@ -95,18 +101,16 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   // =========================================================================
 
   private void initViews() {
-    rootView.findViewById(R.id.toBack).setOnClickListener(this);
+    View toBack = rootView.findViewById(R.id.toBack);
+    View btnHideFontControl = rootView.findViewById(R.id.btnHideFontControl);
+
+    toBack.setOnClickListener(this);
     rootView.findViewById(R.id.rootView).setOnClickListener(this);
-    rootView.findViewById(R.id.deleteApp).setOnClickListener(this);
-    rootView.findViewById(R.id.showWifiName).setOnClickListener(this);
-    rootView.findViewById(R.id.btnHideFontControl).setOnClickListener(this);
-    rootView.findViewById(R.id.changeFontSize).setOnClickListener(this);
-    rootView.findViewById(R.id.helpAbout).setOnClickListener(this);
-    rootView.findViewById(R.id.menu_ftp).setOnClickListener(this);
-    rootView.findViewById(R.id.openDeviceManager).setOnClickListener(this);
+    btnHideFontControl.setOnClickListener(this);
 
     showStatusBar = rootView.findViewById(R.id.showStatusBar);
     showCustomIcon = rootView.findViewById(R.id.showCustomIcon);
+    showWifiName = rootView.findViewById(R.id.showWifiName);
     ftpStatus = rootView.findViewById(R.id.ftp_status);
     ftpAddr = rootView.findViewById(R.id.ftp_addr);
     hideDivider = rootView.findViewById(R.id.hideDivider);
@@ -116,10 +120,23 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     appNameLinesSpinner = rootView.findViewById(R.id.appNameLine);
     sortModeSpinner = rootView.findViewById(R.id.sortModeSpinner);
     themeModeSpinner = rootView.findViewById(R.id.theme_mode_spinner);
+    changeFontSize = rootView.findViewById(R.id.changeFontSize);
+    deleteApp = rootView.findViewById(R.id.deleteApp);
+    helpAbout = rootView.findViewById(R.id.helpAbout);
+    menuFtp = rootView.findViewById(R.id.menu_ftp);
+    openDeviceManager = rootView.findViewById(R.id.openDeviceManager);
 
     showStatusBar.setOnClickListener(this);
     hideDivider.setOnClickListener(this);
     showCustomIcon.setOnClickListener(this);
+    showWifiName.setOnClickListener(this);
+    changeFontSize.setOnClickListener(this);
+    deleteApp.setOnClickListener(this);
+    helpAbout.setOnClickListener(this);
+    menuFtp.setOnClickListener(this);
+    openDeviceManager.setOnClickListener(this);
+
+    initDpadFocus(toBack, btnHideFontControl);
 
     // 初始化 UI 状态
     showStatusBar.getPaint().setStrikeThruText(config.isShowStatusBar());
@@ -127,6 +144,42 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     hideDivider.setText(config.isHideDivider() ? "显示分隔线" : "隐藏分隔线");
     showCustomIcon.getPaint().setStrikeThruText(config.isShowCustomIcon());
     fontControl.setProgress((int) ((config.getFontSize() - 10) * 10));
+  }
+
+  private void initDpadFocus(View toBack, View btnHideFontControl) {
+    View[] menuItems = new View[] {
+        colNumSpinner,
+        rowNumSpinner,
+        appNameLinesSpinner,
+        sortModeSpinner,
+        hideDivider,
+        showStatusBar,
+        showWifiName,
+        showCustomIcon,
+        changeFontSize,
+        deleteApp,
+        themeModeSpinner,
+        openDeviceManager,
+        helpAbout,
+        menuFtp
+    };
+
+    for (View item : menuItems) {
+      makeFocusable(item);
+    }
+    makeFocusable(toBack);
+    makeFocusable(btnHideFontControl);
+    makeFocusable(fontControl);
+
+    colNumSpinner.requestFocus();
+  }
+
+  private void makeFocusable(View view) {
+    view.setFocusable(true);
+    view.setFocusableInTouchMode(false);
+    if (!(view instanceof Spinner) && !(view instanceof SeekBar)) {
+      view.setBackgroundResource(R.drawable.setting_item_focus);
+    }
   }
 
   private void initSpinners() {
@@ -252,9 +305,11 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     } else if (id == R.id.btnHideFontControl) {
       rootView.findViewById(R.id.menuList).setVisibility(View.VISIBLE);
       rootView.findViewById(R.id.font_control_p).setVisibility(View.GONE);
+      changeFontSize.requestFocus();
     } else if (id == R.id.changeFontSize) {
       rootView.findViewById(R.id.menuList).setVisibility(View.GONE);
       rootView.findViewById(R.id.font_control_p).setVisibility(View.VISIBLE);
+      fontControl.requestFocus();
     } else if (id == R.id.hideDivider) {
       handleToggleDivider();
     } else if (id == R.id.menu_ftp) {

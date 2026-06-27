@@ -19,7 +19,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="0.7dp"
-        android:background="#000000" />
+        android:background="@color/dividerColor" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -61,7 +61,8 @@
                 <cn.modificator.launcher.widgets.BatteryView
                     android:id="@+id/batteryProgress"
                     android:layout_width="25dp"
-                    android:layout_height="25dp" />
+                    android:layout_height="25dp"
+                    android:background="@drawable/footer_item_focus" />
 
                 <TextView
                     android:id="@+id/batteryStatus"
@@ -77,7 +78,7 @@
                 android:id="@+id/toSetting"
                 android:layout_width="60dp"
                 android:layout_height="45dp"
-                android:background="?android:selectableItemBackground"
+                android:background="@drawable/footer_item_focus"
                 android:clickable="true"
                 android:padding="10dp"
                 android:src="@drawable/navibar_icon_settings_highlight" />
