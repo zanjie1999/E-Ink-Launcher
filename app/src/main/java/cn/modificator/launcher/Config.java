@@ -36,7 +36,7 @@ public class Config {
   private static final boolean DEFAULT_SHOW_STATUS_BAR = true;
   private static final boolean DEFAULT_SHOW_CUSTOM_ICON = false;
   private static final int DEFAULT_SORT_MODE = 0;
-  private static final int DEFAULT_THEME_MODE = 0;
+  private static final int DEFAULT_THEME_MODE = 3;
   private static final boolean DEFAULT_CLOCK_SHOW_SECONDS = false;
   private static final int DEFAULT_SCREEN_ORIENTATION = 0;
 
