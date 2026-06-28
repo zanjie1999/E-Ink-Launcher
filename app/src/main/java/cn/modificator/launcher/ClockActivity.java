@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.format.DateFormat;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -183,5 +185,24 @@ public class ClockActivity extends AppCompatActivity {
       getWindow().getAttributes().layoutInDisplayCutoutMode =
           WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
     }
+  }
+
+  @Override
+  public boolean onKeyDown(int keyCode, KeyEvent event) {
+    Log.d("zyyme onKeyDown", String.valueOf(keyCode));
+
+    if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+        || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+        || keyCode == KeyEvent.KEYCODE_DPAD_UP
+        || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+      rotateScreen();
+      return true;
+    } else if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+        || keyCode == KeyEvent.KEYCODE_ENTER
+        || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
+      backToLauncher();
+      return true;
+    }
+    return super.onKeyDown(keyCode, event);
   }
 }
