@@ -38,4 +38,11 @@
         <item>最近访问 ↑</item>
         <item>最近访问 ↓</item>
     </string-array>
+    <string-array name="screen_orientation_modes">
+        <item>默认</item>
+        <item>竖屏</item>
+        <item>横屏</item>
+        <item>反向竖屏</item>
+        <item>反向横屏</item>
+    </string-array>
 </resources>

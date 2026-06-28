@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -152,6 +153,7 @@ public class Launcher extends AppCompatActivity
     setContentView(R.layout.launcher_activity);
 
     config = new Config(this);
+    applyScreenOrientation(config.getScreenOrientation());
 
     // 主题切换
     int themeMode = config.getThemeMode();
@@ -435,6 +437,12 @@ public class Launcher extends AppCompatActivity
     recreate();
   }
 
+  @Override
+  public void onScreenOrientationChanged(int mode) {
+    config.setScreenOrientation(mode);
+    applyScreenOrientation(mode);
+  }
+
   // =========================================================================
   // 布局更新
   // =========================================================================
@@ -443,6 +451,26 @@ public class Launcher extends AppCompatActivity
     if (adapter == null || iconCache == null) return;
     iconCache.refreshCustomIcons(getExternalCacheDir() != null, config.isShowCustomIcon());
     adapter.refreshDisplay();
+  }
+
+  private void applyScreenOrientation(int mode) {
+    setRequestedOrientation(getRequestedOrientationForMode(mode));
+  }
+
+  private int getRequestedOrientationForMode(int mode) {
+    switch (mode) {
+      case 1:
+        return ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+      case 2:
+        return ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+      case 3:
+        return ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+      case 4:
+        return ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+      case 0:
+      default:
+        return ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+    }
   }
 
   // =========================================================================

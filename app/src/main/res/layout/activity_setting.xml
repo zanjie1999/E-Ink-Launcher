@@ -471,6 +471,44 @@
                 android:layout_height="1dp"
                 android:background="#000000" />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/menu_item_height"
+                android:layout_marginTop="5dp"
+                android:orientation="horizontal">
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/setting_screen_orientation"
+                    android:textSize="@dimen/menu_item_text_size" />
+
+                <Spinner
+                    android:id="@+id/screen_orientation_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="10dp"
+                    android:entries="@array/screen_orientation_modes"
+                    android:gravity="center"/>
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_marginTop="5dp"
+                android:layout_height="1dp"
+                android:background="#000000" />
+
             <TextView
                 android:id="@+id/hideDivider"
                 android:layout_width="match_parent"

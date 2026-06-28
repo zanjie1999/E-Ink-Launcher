@@ -25,6 +25,7 @@ public class Config {
   public static final String KEY_SORT_MODE = "launcherSortMode";
   public static final String KEY_THEME_MODE = "themeMode";
   public static final String KEY_CLOCK_SHOW_SECONDS = "launcherClockShowSeconds";
+  public static final String KEY_SCREEN_ORIENTATION = "launcherScreenOrientation";
 
   // ---- 默认值 ----
   private static final int DEFAULT_COL_NUM = 5;
@@ -37,6 +38,7 @@ public class Config {
   private static final int DEFAULT_SORT_MODE = 0;
   private static final int DEFAULT_THEME_MODE = 0;
   private static final boolean DEFAULT_CLOCK_SHOW_SECONDS = false;
+  private static final int DEFAULT_SCREEN_ORIENTATION = 0;
 
   private static final String PREFS_FILE = "launcherPropertyFile";
 
@@ -53,6 +55,7 @@ public class Config {
   private boolean clockShowSeconds;
   private int sortMode = -1;
   private int themeMode = -1;
+  private int screenOrientation = -1;
   private final Set<String> hideApps = new HashSet<>();
   private boolean hideAppsLoaded = false;
 
@@ -109,6 +112,21 @@ public class Config {
     if (this.themeMode == themeMode) return;
     this.themeMode = themeMode;
     prefs.edit().putInt(KEY_THEME_MODE, themeMode).apply();
+  }
+
+  // ---- 屏幕方向 ----
+
+  public int getScreenOrientation() {
+    if (screenOrientation == -1) {
+      screenOrientation = prefs.getInt(KEY_SCREEN_ORIENTATION, DEFAULT_SCREEN_ORIENTATION);
+    }
+    return screenOrientation;
+  }
+
+  public void setScreenOrientation(int screenOrientation) {
+    if (this.screenOrientation == screenOrientation) return;
+    this.screenOrientation = screenOrientation;
+    prefs.edit().putInt(KEY_SCREEN_ORIENTATION, screenOrientation).apply();
   }
 
   // ---- 隐藏应用 ----

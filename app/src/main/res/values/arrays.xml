@@ -38,4 +38,11 @@
         <item>Recent access ↑</item>
         <item>Recent access ↓</item>
     </string-array>
+    <string-array name="screen_orientation_modes">
+        <item>Default</item>
+        <item>Portrait</item>
+        <item>Landscape</item>
+        <item>Reverse portrait</item>
+        <item>Reverse landscape</item>
+    </string-array>
 </resources>

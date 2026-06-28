@@ -89,6 +89,7 @@
         <item>纯黑背景</item>
     </string-array>
     <string name="setting_sort_mode">Sort</string>
+    <string name="setting_screen_orientation">Screen orientation</string>
     <string name="sort_need_usage_permission">Please grant usage access permission for this sort mode</string>
     <string name="clean_start">Start cleaning…</string>
     <string name="clean_error">Clean error: %s</string>

@@ -45,6 +45,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     void onClockShowSecondsChanged(boolean show);
     void onSortModeChanged(int mode);
     void onThemeModeChanged(int mode);
+    void onScreenOrientationChanged(int mode);
     void onEnterManageMode();
   }
 
@@ -55,6 +56,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   private Spinner appNameLinesSpinner;
   private Spinner sortModeSpinner;
   private Spinner themeModeSpinner;
+  private Spinner screenOrientationSpinner;
   private SeekBar fontControl;
   private View rootView;
   private TextView hideDivider;
@@ -123,6 +125,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     appNameLinesSpinner = rootView.findViewById(R.id.appNameLine);
     sortModeSpinner = rootView.findViewById(R.id.sortModeSpinner);
     themeModeSpinner = rootView.findViewById(R.id.theme_mode_spinner);
+    screenOrientationSpinner = rootView.findViewById(R.id.screen_orientation_spinner);
     changeFontSize = rootView.findViewById(R.id.changeFontSize);
     deleteApp = rootView.findViewById(R.id.deleteApp);
     helpAbout = rootView.findViewById(R.id.helpAbout);
@@ -157,6 +160,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
         rowNumSpinner,
         appNameLinesSpinner,
         sortModeSpinner,
+        screenOrientationSpinner,
         hideDivider,
         showStatusBar,
         showWifiName,
@@ -246,6 +250,22 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
         }
         config.setSortMode(position);
         listener.onSortModeChanged(position);
+      }
+
+      @Override
+      public void onNothingSelected(AdapterView<?> parent) {
+      }
+    });
+
+    screenOrientationSpinner.setSelection(config.getScreenOrientation(), false);
+    screenOrientationSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+      @Override
+      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        if (position == config.getScreenOrientation()) {
+          return;
+        }
+        config.setScreenOrientation(position);
+        listener.onScreenOrientationChanged(position);
       }
 
       @Override
