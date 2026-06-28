@@ -18,6 +18,8 @@ import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
@@ -80,14 +82,17 @@ public class Launcher extends AppCompatActivity
   private int focusArea = FOCUS_NONE;
   private int lastGridIndex = 0;
   private boolean confirmLongPressed = false;
+  private final Handler clockHandler = new Handler(Looper.getMainLooper());
+  private boolean clockTickerRunning = false;
 
   // ---- Device Admin ----
   private DevicePolicyManager policyManager;
 
   private static final int FOCUS_NONE = 0;
   private static final int FOCUS_GRID = 1;
-  private static final int FOCUS_BATTERY = 2;
-  private static final int FOCUS_SETTING = 3;
+  private static final int FOCUS_CLOCK = 2;
+  private static final int FOCUS_BATTERY = 3;
+  private static final int FOCUS_SETTING = 4;
 
   // ---- Receivers ----
   private FTPReceiver ftpReceiver = new FTPReceiver();
@@ -100,6 +105,14 @@ public class Launcher extends AppCompatActivity
     @Override
     public void onReceive(Context context, Intent intent) {
       updateTimeShow();
+    }
+  };
+
+  private final Runnable clockTicker = new Runnable() {
+    @Override
+    public void run() {
+      updateTimeShow();
+      clockHandler.postDelayed(this, getNextClockTickDelay());
     }
   };
 
@@ -217,6 +230,34 @@ public class Launcher extends AppCompatActivity
     return super.dispatchTouchEvent(ev);
   }
 
+  @Override
+  public boolean dispatchKeyEvent(KeyEvent event) {
+    if (getFragmentManager().getBackStackEntryCount() == 0 && isConfirmKey(event.getKeyCode())) {
+      if (event.getAction() == KeyEvent.ACTION_DOWN) {
+        if (focusArea == FOCUS_NONE) {
+          confirmLongPressed = false;
+          return true;
+        }
+        if (event.getRepeatCount() > 0) {
+          if (!confirmLongPressed) {
+            confirmLongPressed = true;
+            performFocusedLongClick();
+          }
+          return true;
+        }
+        event.startTracking();
+        return true;
+      } else if (event.getAction() == KeyEvent.ACTION_UP) {
+        if (focusArea != FOCUS_NONE && !confirmLongPressed && !event.isCanceled()) {
+          performFocusedClick();
+        }
+        confirmLongPressed = false;
+        return true;
+      }
+    }
+    return super.dispatchKeyEvent(event);
+  }
+
   // =========================================================================
   // View 初始化
   // =========================================================================
@@ -229,6 +270,8 @@ public class Launcher extends AppCompatActivity
     batteryProgress = findViewById(R.id.batteryProgress);
     batteryStatus = findViewById(R.id.batteryStatus);
     textClock = findViewById(R.id.textClock);
+    textClock.setBackgroundResource(R.drawable.footer_item_focus);
+    textClock.setClickable(true);
 
     settingIcon = findViewById(R.id.toSetting);
     settingIcon.setImageDrawable(
@@ -300,6 +343,13 @@ public class Launcher extends AppCompatActivity
         openBatterySettings();
       }
     });
+    textClock.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        clearKeyboardFocus();
+        openClockActivity();
+      }
+    });
 
     // 时间显示
     calendar = Calendar.getInstance();
@@ -354,6 +404,12 @@ public class Launcher extends AppCompatActivity
   public void onShowCustomIconChanged(boolean show) {
     iconCache.markDirty();
     refreshIcons();
+  }
+
+  @Override
+  public void onClockShowSecondsChanged(boolean show) {
+    config.setClockShowSeconds(show);
+    updateClockRefreshMode();
   }
 
   @Override
@@ -511,13 +567,17 @@ public class Launcher extends AppCompatActivity
     if (textClock == null || calendar == null) return;
 
     boolean is24Hour = DateFormat.is24HourFormat(this);
+    boolean showSeconds = config != null && config.isClockShowSeconds();
     calendar.setTimeInMillis(System.currentTimeMillis());
 
     StringBuilder sb = new StringBuilder("yyyy-MM-dd ");
     if (!is24Hour && isChina) {
       sb.append(Utils.getAMPMCNString(calendar.get(Calendar.HOUR), calendar.get(Calendar.AM_PM)));
     }
-    sb.append(is24Hour ? "HH:mm" : "hh:mm");
+    sb.append(is24Hour ? "H:mm" : "h:mm");
+    if (showSeconds) {
+      sb.append(":ss");
+    }
     if (!is24Hour && !isChina) {
       sb.append(" a");
     }
@@ -590,11 +650,7 @@ public class Launcher extends AppCompatActivity
       registerCompatReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
       batteryRegistered = true;
     }
-    if (!timeRegistered) {
-      registerCompatReceiver(timeReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
-      timeRegistered = true;
-    }
-    updateTimeShow();
+    updateClockRefreshMode();
     if (!usbRegistered) {
       registerUsbReceiver();
     }
@@ -615,6 +671,7 @@ public class Launcher extends AppCompatActivity
       unregisterReceiver(timeReceiver);
       timeRegistered = false;
     }
+    stopClockTicker();
     if (usbRegistered) {
       unregisterReceiver(usbReceiver);
       usbRegistered = false;
@@ -640,12 +697,46 @@ public class Launcher extends AppCompatActivity
     Utils.registerReceiverCompat(this, receiver, filter);
   }
 
+  private void updateClockRefreshMode() {
+    updateTimeShow();
+    if (config != null && config.isClockShowSeconds()) {
+      if (timeRegistered) {
+        unregisterReceiver(timeReceiver);
+        timeRegistered = false;
+      }
+      startClockTicker();
+    } else {
+      stopClockTicker();
+      if (!timeRegistered) {
+        registerCompatReceiver(timeReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
+        timeRegistered = true;
+      }
+    }
+  }
+
+  private void startClockTicker() {
+    if (clockTickerRunning) return;
+    clockTickerRunning = true;
+    clockHandler.removeCallbacks(clockTicker);
+    clockHandler.postDelayed(clockTicker, getNextClockTickDelay());
+  }
+
+  private void stopClockTicker() {
+    clockTickerRunning = false;
+    clockHandler.removeCallbacks(clockTicker);
+  }
+
+  private long getNextClockTickDelay() {
+    return 1000 - System.currentTimeMillis() % 1000;
+  }
+
   // =========================================================================
   // 按键处理
   // =========================================================================
 
   @Override
   public boolean onKeyUp(int keyCode, KeyEvent event) {
+    Log.d("zyyme onKeyUp", String.valueOf(keyCode));
     if (getFragmentManager().getBackStackEntryCount() != 0 || !isLauncherNavigationKey(keyCode)) {
       return super.onKeyUp(keyCode, event);
     }
@@ -661,6 +752,7 @@ public class Launcher extends AppCompatActivity
 
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
+    Log.d("zyyme onKeyDown", String.valueOf(keyCode));
     boolean hasFragment = getFragmentManager().getBackStackEntryCount() > 0;
     if (hasFragment) {
       if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -725,7 +817,7 @@ public class Launcher extends AppCompatActivity
       return;
     }
 
-    if (focusArea == FOCUS_BATTERY || focusArea == FOCUS_SETTING) {
+    if (focusArea == FOCUS_CLOCK || focusArea == FOCUS_BATTERY || focusArea == FOCUS_SETTING) {
       moveFooterFocus(keyCode);
       return;
     }
@@ -737,7 +829,7 @@ public class Launcher extends AppCompatActivity
 
     if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && isOnBottomRow()) {
       lastGridIndex = launcherView.getSelectedIndex();
-      focusFooter(FOCUS_BATTERY);
+      focusFooter(FOCUS_CLOCK);
       return;
     }
 
@@ -763,6 +855,10 @@ public class Launcher extends AppCompatActivity
   private void moveFooterFocus(int keyCode) {
     if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
       focusGrid(lastGridIndex);
+    } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && focusArea == FOCUS_CLOCK) {
+      focusFooter(FOCUS_BATTERY);
+    } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && focusArea == FOCUS_BATTERY) {
+      focusFooter(FOCUS_CLOCK);
     } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && focusArea == FOCUS_BATTERY) {
       focusFooter(FOCUS_SETTING);
     } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && focusArea == FOCUS_SETTING) {
@@ -784,11 +880,12 @@ public class Launcher extends AppCompatActivity
 
   private void performFocusedClick() {
     if (focusArea == FOCUS_NONE) {
-      focusGrid(launcherView.getSelectedIndex() < 0 ? 0 : launcherView.getSelectedIndex());
       return;
     }
     if (focusArea == FOCUS_GRID) {
       launcherView.performSelectedItemClick();
+    } else if (focusArea == FOCUS_CLOCK) {
+      textClock.performClick();
     } else if (focusArea == FOCUS_BATTERY) {
       batteryProgress.performClick();
     } else if (focusArea == FOCUS_SETTING) {
@@ -798,7 +895,7 @@ public class Launcher extends AppCompatActivity
 
   private boolean performFocusedLongClick() {
     if (focusArea == FOCUS_NONE) {
-      focusGrid(launcherView.getSelectedIndex() < 0 ? 0 : launcherView.getSelectedIndex());
+      return false;
     }
     if (focusArea == FOCUS_GRID) {
       return launcherView.performSelectedItemLongClick();
@@ -827,6 +924,9 @@ public class Launcher extends AppCompatActivity
   }
 
   private void updateFooterFocus() {
+    if (textClock != null) {
+      textClock.setSelected(focusArea == FOCUS_CLOCK);
+    }
     if (batteryProgress != null) {
       batteryProgress.setSelected(focusArea == FOCUS_BATTERY);
     }
@@ -840,6 +940,10 @@ public class Launcher extends AppCompatActivity
         .replace(android.R.id.content, new SettingFragment())
         .addToBackStack(null)
         .commit();
+  }
+
+  private void openClockActivity() {
+    startActivity(new Intent(this, ClockActivity.class));
   }
 
   private void openBatterySettings() {

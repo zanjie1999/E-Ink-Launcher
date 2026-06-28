@@ -72,6 +72,7 @@
     <string name="show_custom_icon">显示自定义图标</string>
     <string name="show_statusbar">显示状态栏</string>
     <string name="show_wifi_name">显示WiFi名字</string>
+    <string name="clock_show_seconds">时钟显示秒</string>
     <string name="notification_click_back_launcher">点击这里回到桌面</string>
     <string name="app_show_name">App 名字</string>
     <string name="setting_sort_mode">排序方式</string>

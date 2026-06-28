@@ -528,6 +528,20 @@
                 android:layout_height="1dp"
                 android:background="#000000" />
 
+            <TextView
+                android:id="@+id/clockShowSeconds"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/menu_item_height"
+                android:paddingLeft="20dp"
+                android:gravity="left|center_vertical"
+                android:text="@string/clock_show_seconds"
+                android:textSize="@dimen/menu_item_text_size" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#000000" />
+
             <LinearLayout
                 android:id="@+id/changeFontSize"
                 android:layout_width="match_parent"

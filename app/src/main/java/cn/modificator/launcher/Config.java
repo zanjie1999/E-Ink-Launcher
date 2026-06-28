@@ -24,6 +24,7 @@ public class Config {
   public static final String KEY_SHOW_CUSTOM_ICON = "launcherShowCustomIcon";
   public static final String KEY_SORT_MODE = "launcherSortMode";
   public static final String KEY_THEME_MODE = "themeMode";
+  public static final String KEY_CLOCK_SHOW_SECONDS = "launcherClockShowSeconds";
 
   // ---- 默认值 ----
   private static final int DEFAULT_COL_NUM = 5;
@@ -35,6 +36,7 @@ public class Config {
   private static final boolean DEFAULT_SHOW_CUSTOM_ICON = false;
   private static final int DEFAULT_SORT_MODE = 0;
   private static final int DEFAULT_THEME_MODE = 0;
+  private static final boolean DEFAULT_CLOCK_SHOW_SECONDS = false;
 
   private static final String PREFS_FILE = "launcherPropertyFile";
 
@@ -48,6 +50,7 @@ public class Config {
   private boolean hideDivider;
   private boolean showStatusBar;
   private boolean showCustomIcon;
+  private boolean clockShowSeconds;
   private int sortMode = -1;
   private int themeMode = -1;
   private final Set<String> hideApps = new HashSet<>();
@@ -59,6 +62,7 @@ public class Config {
     this.hideDivider = prefs.getBoolean(KEY_HIDE_DIVIDER, DEFAULT_HIDE_DIVIDER);
     this.showStatusBar = prefs.getBoolean(KEY_SHOW_STATUS_BAR, DEFAULT_SHOW_STATUS_BAR);
     this.showCustomIcon = prefs.getBoolean(KEY_SHOW_CUSTOM_ICON, DEFAULT_SHOW_CUSTOM_ICON);
+    this.clockShowSeconds = prefs.getBoolean(KEY_CLOCK_SHOW_SECONDS, DEFAULT_CLOCK_SHOW_SECONDS);
     this.appNameLines = prefs.getInt(KEY_APP_NAME_LINES, DEFAULT_APP_NAME_LINES);
   }
 
@@ -185,6 +189,17 @@ public class Config {
   public void setShowCustomIcon(boolean show) {
     this.showCustomIcon = show;
     prefs.edit().putBoolean(KEY_SHOW_CUSTOM_ICON, show).apply();
+  }
+
+  // ---- 时钟显示秒 ----
+
+  public boolean isClockShowSeconds() {
+    return clockShowSeconds;
+  }
+
+  public void setClockShowSeconds(boolean show) {
+    this.clockShowSeconds = show;
+    prefs.edit().putBoolean(KEY_CLOCK_SHOW_SECONDS, show).apply();
   }
 
   // ---- 应用名行数 ----

@@ -45,6 +45,13 @@
             <meta-data android:name="com.yotadevices.keep_on_epd_screen" android:value="true"/>
         </activity>
 
+        <activity
+            android:name=".ClockActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false">
+            <meta-data android:name="com.yotadevices.keep_on_epd_screen" android:value="true"/>
+        </activity>
+
         <meta-data
             android:name="app_description_title"
             android:resource="@string/app_name" />

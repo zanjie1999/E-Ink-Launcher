@@ -42,6 +42,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     void onHideDividerChanged(boolean hide);
     void onShowStatusBarChanged(boolean show);
     void onShowCustomIconChanged(boolean show);
+    void onClockShowSecondsChanged(boolean show);
     void onSortModeChanged(int mode);
     void onThemeModeChanged(int mode);
     void onEnterManageMode();
@@ -61,6 +62,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   private TextView ftpStatus;
   private TextView showStatusBar;
   private TextView showCustomIcon;
+  private TextView clockShowSeconds;
   private Config config;
   private View changeFontSize;
   private View deleteApp;
@@ -110,6 +112,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
 
     showStatusBar = rootView.findViewById(R.id.showStatusBar);
     showCustomIcon = rootView.findViewById(R.id.showCustomIcon);
+    clockShowSeconds = rootView.findViewById(R.id.clockShowSeconds);
     showWifiName = rootView.findViewById(R.id.showWifiName);
     ftpStatus = rootView.findViewById(R.id.ftp_status);
     ftpAddr = rootView.findViewById(R.id.ftp_addr);
@@ -129,6 +132,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     showStatusBar.setOnClickListener(this);
     hideDivider.setOnClickListener(this);
     showCustomIcon.setOnClickListener(this);
+    clockShowSeconds.setOnClickListener(this);
     showWifiName.setOnClickListener(this);
     changeFontSize.setOnClickListener(this);
     deleteApp.setOnClickListener(this);
@@ -143,6 +147,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     hideDivider.getPaint().setStrikeThruText(config.isHideDivider());
     hideDivider.setText(config.isHideDivider() ? "显示分隔线" : "隐藏分隔线");
     showCustomIcon.getPaint().setStrikeThruText(config.isShowCustomIcon());
+    clockShowSeconds.getPaint().setStrikeThruText(config.isClockShowSeconds());
     fontControl.setProgress((int) ((config.getFontSize() - 10) * 10));
   }
 
@@ -156,6 +161,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
         showStatusBar,
         showWifiName,
         showCustomIcon,
+        clockShowSeconds,
         changeFontSize,
         deleteApp,
         themeModeSpinner,
@@ -321,6 +327,8 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
       handleShowWifiName();
     } else if (id == R.id.showCustomIcon) {
       handleToggleCustomIcon();
+    } else if (id == R.id.clockShowSeconds) {
+      handleToggleClockShowSeconds();
     } else if (id == R.id.openDeviceManager) {
       startActivity(new Intent().setComponent(
           new ComponentName("com.android.settings", "com.android.settings.DeviceAdminSettings")));
@@ -380,6 +388,13 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
         getActivity().onBackPressed();
       }
     });
+  }
+
+  private void handleToggleClockShowSeconds() {
+    boolean newValue = !config.isClockShowSeconds();
+    config.setClockShowSeconds(newValue);
+    clockShowSeconds.getPaint().setStrikeThruText(newValue);
+    listener.onClockShowSecondsChanged(newValue);
   }
 
   @Override

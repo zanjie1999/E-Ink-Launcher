@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/clockRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/mainBgColor"
+    android:orientation="vertical"
+    android:weightSum="6"
+    tools:context=".ClockActivity">
+
+
+    <TextView
+        android:id="@+id/tv_top"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0"
+        android:gravity="center"
+        android:text=""
+        android:textSize="25sp"
+        android:autoSizeTextType="uniform"
+        app:autoSizeTextType="uniform"
+        app:autoSizeMinTextSize="8sp"
+        android:autoSizeMaxTextSize="50sp"
+        app:autoSizeMaxTextSize="50sp"
+        app:autoSizeStepGranularity="1sp"
+        android:maxLines="1"
+        android:includeFontPadding="false"
+        android:textAlignment="center"
+        android:clickable="true"
+        android:focusable="true"/>
+
+    <TextView
+        android:id="@+id/tv_time"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="4"
+        android:gravity="center"
+        android:text="12:13:14"
+        android:textColor="@color/textColor"
+        android:textSize="70sp"
+        android:autoSizeTextType="uniform"
+        app:autoSizeTextType="uniform"
+        app:autoSizeMinTextSize="18sp"
+        android:autoSizeMaxTextSize="300sp"
+        app:autoSizeMaxTextSize="300sp"
+        app:autoSizeStepGranularity="1sp"
+        android:maxLines="1"
+        android:includeFontPadding="false"
+        android:textAlignment="center"
+        android:clickable="true"
+        android:focusable="true"/>
+
+    <TextView
+        android:id="@+id/tv_date"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:gravity="center"
+        android:text="2月30日 周⑨"
+        android:textColor="@color/textColor"
+        android:textSize="25sp"
+        android:autoSizeTextType="uniform"
+        app:autoSizeTextType="uniform"
+        app:autoSizeMinTextSize="8sp"
+        android:autoSizeMaxTextSize="80sp"
+        app:autoSizeMaxTextSize="80sp"
+        app:autoSizeStepGranularity="1sp"
+        android:maxLines="1"
+        android:includeFontPadding="false"
+        android:textAlignment="center"
+        android:clickable="true"
+        android:focusable="true"/>
+
+</LinearLayout>
