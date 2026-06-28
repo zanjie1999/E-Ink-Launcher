@@ -251,6 +251,9 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     themeModeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        if (position == config.getThemeMode()) {
+          return;
+        }
         config.setThemeMode(position);
         listener.onThemeModeChanged(position);
       }

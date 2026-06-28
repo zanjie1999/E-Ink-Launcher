@@ -371,6 +371,10 @@ public class Launcher extends AppCompatActivity
 
   @Override
   public void onThemeModeChanged(int mode) {
+    if (mode == config.getThemeMode()) {
+      return;
+    }
+    config.setThemeMode(mode);
     setThemeMode(mode);
     recreate();
   }
