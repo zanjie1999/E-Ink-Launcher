@@ -40,6 +40,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
@@ -577,6 +578,8 @@ public class Launcher extends AppCompatActivity
             if (!hideApps.add(packageName)) {
               hideApps.remove(packageName);
             }
+            config.setHideApps(new HashSet<>(hideApps));
+            dataCenter.setHideApps(config.getHideApps());
             dataCenter.refreshAppList();
           }
         })
@@ -832,9 +835,11 @@ public class Launcher extends AppCompatActivity
   }
 
   private void finishManageMode() {
+    Set<String> hideApps = new HashSet<>(binder.getHideAppPkg());
+    config.setHideApps(hideApps);
+    dataCenter.setHideApps(config.getHideApps());
     binder.setDelete(false);
     dataCenter.refreshAppList();
-    config.setHideApps(dataCenter.getHideApps());
     findViewById(R.id.deleteFinish).setVisibility(View.GONE);
   }
 

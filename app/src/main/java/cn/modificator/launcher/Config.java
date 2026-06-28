@@ -134,25 +134,25 @@ public class Config {
   public void addHideApp(String packageName) {
     ensureHideAppsLoaded();
     hideApps.add(packageName);
-    prefs.edit().putStringSet(KEY_HIDE_APPS, hideApps).apply();
+    prefs.edit().putStringSet(KEY_HIDE_APPS, new HashSet<>(hideApps)).commit();
   }
 
   public void removeHideApp(String packageName) {
     ensureHideAppsLoaded();
     hideApps.remove(packageName);
-    prefs.edit().putStringSet(KEY_HIDE_APPS, hideApps).apply();
+    prefs.edit().putStringSet(KEY_HIDE_APPS, new HashSet<>(hideApps)).commit();
   }
 
   public void setHideApps(Set<String> hideApps) {
     this.hideApps.clear();
     this.hideApps.addAll(hideApps);
     this.hideAppsLoaded = true;
-    prefs.edit().putStringSet(KEY_HIDE_APPS, this.hideApps).apply();
+    prefs.edit().putStringSet(KEY_HIDE_APPS, new HashSet<>(this.hideApps)).commit();
   }
 
   public Set<String> getHideApps() {
     ensureHideAppsLoaded();
-    return hideApps;
+    return new HashSet<>(hideApps);
   }
 
   private void ensureHideAppsLoaded() {

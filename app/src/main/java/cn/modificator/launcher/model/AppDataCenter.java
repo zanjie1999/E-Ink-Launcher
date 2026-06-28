@@ -51,9 +51,6 @@ public class AppDataCenter {
   public void setAdapter(LauncherAdapter adapter) {
     this.adapter = adapter;
     this.binder = adapter.getBinder();
-    if (binder != null) {
-      binder.setHideAppPkg(hideApps);
-    }
     setPageShow();
   }
 
@@ -69,6 +66,9 @@ public class AppDataCenter {
   public void setHideApps(Set<String> hideApps) {
     this.hideApps.clear();
     this.hideApps.addAll(hideApps);
+    if (binder != null) {
+      binder.setHideAppPkg(this.hideApps);
+    }
     loadApps();
     setPageShow();
   }
