@@ -191,7 +191,7 @@ public class ClockActivity extends AppCompatActivity {
   public boolean dispatchKeyEvent(KeyEvent event) {
     if (event.getAction() == KeyEvent.ACTION_DOWN) {
       int keyCode = event.getKeyCode();
-      Log.d("zyyme dispatchKeyEvent", String.valueOf(keyCode));
+      Log.d("zyyme dispatchKeyEventD", String.valueOf(keyCode));
       if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT
           || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
           || keyCode == KeyEvent.KEYCODE_DPAD_UP
@@ -202,6 +202,18 @@ public class ClockActivity extends AppCompatActivity {
           || keyCode == KeyEvent.KEYCODE_ENTER
           || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
         backToLauncher();
+        return true;
+      }
+    } else if (event.getAction() == KeyEvent.ACTION_UP) {
+      int keyCode = event.getKeyCode();
+      Log.d("zyyme dispatchKeyEventU", String.valueOf(keyCode));
+      if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+          || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+          || keyCode == KeyEvent.KEYCODE_DPAD_UP
+          || keyCode == KeyEvent.KEYCODE_DPAD_DOWN
+          || keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+          || keyCode == KeyEvent.KEYCODE_ENTER
+          || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
         return true;
       }
     }

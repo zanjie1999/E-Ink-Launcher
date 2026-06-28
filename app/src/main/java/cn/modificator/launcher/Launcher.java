@@ -28,6 +28,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -83,6 +84,8 @@ public class Launcher extends AppCompatActivity
   private int focusArea = FOCUS_NONE;
   private int lastGridIndex = 0;
   private boolean confirmLongPressed = false;
+  private int handledLauncherKeyCode = KeyEvent.KEYCODE_UNKNOWN;
+  private long handledLauncherKeyDownTime = 0L;
   private final Handler clockHandler = new Handler(Looper.getMainLooper());
   private boolean clockTickerRunning = false;
 
@@ -234,29 +237,24 @@ public class Launcher extends AppCompatActivity
 
   @Override
   public boolean dispatchKeyEvent(KeyEvent event) {
-    if (getFragmentManager().getBackStackEntryCount() == 0 && isConfirmKey(event.getKeyCode())) {
-      if (event.getAction() == KeyEvent.ACTION_DOWN) {
-        if (focusArea == FOCUS_NONE) {
-          confirmLongPressed = false;
-          return true;
-        }
-        if (event.getRepeatCount() > 0) {
-          if (!confirmLongPressed) {
-            confirmLongPressed = true;
-            performFocusedLongClick();
-          }
-          return true;
-        }
-        event.startTracking();
+    int keyCode = event.getKeyCode();
+    Log.d("zyyme dispatchKeyEvent", String.valueOf(keyCode));
+
+    if (event.getAction() == KeyEvent.ACTION_DOWN) {
+      if (handleLauncherKeyDown(keyCode, event)) {
+        handledLauncherKeyCode = keyCode;
+        handledLauncherKeyDownTime = event.getDownTime();
         return true;
-      } else if (event.getAction() == KeyEvent.ACTION_UP) {
-        if (focusArea != FOCUS_NONE && !confirmLongPressed && !event.isCanceled()) {
-          performFocusedClick();
-        }
-        confirmLongPressed = false;
+      }
+    } else if (event.getAction() == KeyEvent.ACTION_UP) {
+      boolean wasHandledOnDown =
+          handledLauncherKeyCode == keyCode && handledLauncherKeyDownTime == event.getDownTime();
+      if (handleLauncherKeyUp(keyCode, event) || wasHandledOnDown) {
+        clearHandledLauncherKey();
         return true;
       }
     }
+
     return super.dispatchKeyEvent(event);
   }
 
@@ -268,6 +266,9 @@ public class Launcher extends AppCompatActivity
     policyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
 
     launcherView = findViewById(R.id.mList);
+    launcherView.setFocusable(true);
+    launcherView.setFocusableInTouchMode(true);
+    launcherView.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
     pageStatus = findViewById(R.id.pageStatus);
     batteryProgress = findViewById(R.id.batteryProgress);
     batteryStatus = findViewById(R.id.batteryStatus);
@@ -300,6 +301,12 @@ public class Launcher extends AppCompatActivity
 
     // 一次性配置网格参数，避免多次重建
     launcherView.configure(config.getColNum(), config.getRowNum(), config.isHideDivider());
+    launcherView.post(new Runnable() {
+      @Override
+      public void run() {
+        launcherView.requestFocus();
+      }
+    });
     dataCenter.setGridSize(config.getColNum(), config.getRowNum());
     dataCenter.setAdapter(adapter);
     dataCenter.setHideApps(config.getHideApps());
@@ -331,10 +338,7 @@ public class Launcher extends AppCompatActivity
     findViewById(R.id.deleteFinish).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        binder.setDelete(false);
-        dataCenter.refreshAppList();
-        config.setHideApps(dataCenter.getHideApps());
-        v.setVisibility(View.GONE);
+        finishManageMode();
       }
     });
     // 电池点击打开设置
@@ -762,35 +766,20 @@ public class Launcher extends AppCompatActivity
   // 按键处理
   // =========================================================================
 
-  @Override
-  public boolean onKeyUp(int keyCode, KeyEvent event) {
-    Log.d("zyyme onKeyUp", String.valueOf(keyCode));
-    if (getFragmentManager().getBackStackEntryCount() != 0 || !isLauncherNavigationKey(keyCode)) {
-      return super.onKeyUp(keyCode, event);
-    }
-    if (isConfirmKey(keyCode)) {
-      if (!confirmLongPressed) {
-        performFocusedClick();
-      }
-      confirmLongPressed = false;
-      return true;
-    }
-    return true;
-  }
-
-  @Override
-  public boolean onKeyDown(int keyCode, KeyEvent event) {
-    Log.d("zyyme onKeyDown", String.valueOf(keyCode));
+  private boolean handleLauncherKeyDown(int keyCode, KeyEvent event) {
     boolean hasFragment = getFragmentManager().getBackStackEntryCount() > 0;
     if (hasFragment) {
       if (keyCode == KeyEvent.KEYCODE_BACK) {
         onBackPressed();
         return true;
       }
-      return super.onKeyDown(keyCode, event);
+      return false;
     }
 
     if (keyCode == KeyEvent.KEYCODE_BACK) {
+      if (finishManageModeIfNeeded()) {
+        return true;
+      }
       showFirstPageAndKeepFocusState();
       return true;
     } else if (keyCode == KeyEvent.KEYCODE_PAGE_UP) {
@@ -800,22 +789,58 @@ public class Launcher extends AppCompatActivity
       showNextPageAndSelectFirst();
       return true;
     } else if (isConfirmKey(keyCode)) {
+      if (focusArea == FOCUS_NONE) {
+        confirmLongPressed = false;
+        return true;
+      }
+      if (event.getRepeatCount() > 0) {
+        if (!confirmLongPressed) {
+          confirmLongPressed = true;
+          performFocusedLongClick();
+        }
+        return true;
+      }
       event.startTracking();
       return true;
     } else if (isDirectionKey(keyCode)) {
       moveSelectionByKey(keyCode);
       return true;
     }
-    return super.onKeyDown(keyCode, event);
+    return false;
   }
 
-  @Override
-  public boolean onKeyLongPress(int keyCode, KeyEvent event) {
-    if (getFragmentManager().getBackStackEntryCount() == 0 && isConfirmKey(keyCode)) {
-      confirmLongPressed = true;
-      return performFocusedLongClick();
+  private boolean handleLauncherKeyUp(int keyCode, KeyEvent event) {
+    if (getFragmentManager().getBackStackEntryCount() != 0 || !isLauncherNavigationKey(keyCode)) {
+      return false;
     }
-    return super.onKeyLongPress(keyCode, event);
+    if (isConfirmKey(keyCode)) {
+      if (focusArea != FOCUS_NONE && !confirmLongPressed && !event.isCanceled()) {
+        performFocusedClick();
+      }
+      confirmLongPressed = false;
+      return true;
+    }
+    return true;
+  }
+
+  private boolean finishManageModeIfNeeded() {
+    if (!binder.isDelete()) {
+      return false;
+    }
+    finishManageMode();
+    return true;
+  }
+
+  private void finishManageMode() {
+    binder.setDelete(false);
+    dataCenter.refreshAppList();
+    config.setHideApps(dataCenter.getHideApps());
+    findViewById(R.id.deleteFinish).setVisibility(View.GONE);
+  }
+
+  private void clearHandledLauncherKey() {
+    handledLauncherKeyCode = KeyEvent.KEYCODE_UNKNOWN;
+    handledLauncherKeyDownTime = 0L;
   }
 
   private boolean isLauncherNavigationKey(int keyCode) {
@@ -841,7 +866,7 @@ public class Launcher extends AppCompatActivity
 
   private void moveSelectionByKey(int keyCode) {
     if (focusArea == FOCUS_NONE) {
-      focusGrid(launcherView.getSelectedIndex() < 0 ? 0 : launcherView.getSelectedIndex());
+      focusGrid(0);
       return;
     }
 
