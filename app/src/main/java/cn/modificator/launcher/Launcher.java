@@ -375,12 +375,14 @@ public class Launcher extends AppCompatActivity
 
   @Override
   public void onRowNumChanged(int rowNum) {
-    applyGridSize(config.getColNum(), rowNum);
+    config.setRowNum(rowNum);
+    applyGridSize(config.getColNum(), config.getRowNum());
   }
 
   @Override
   public void onColNumChanged(int colNum) {
-    applyGridSize(colNum, config.getRowNum());
+    config.setColNum(colNum);
+    applyGridSize(config.getColNum(), config.getRowNum());
   }
 
   @Override
