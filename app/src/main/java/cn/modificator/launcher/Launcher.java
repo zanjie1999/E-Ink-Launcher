@@ -301,14 +301,13 @@ public class Launcher extends AppCompatActivity
     dataCenter.setPageStatus(pageStatus);
 
     // 一次性配置网格参数，避免多次重建
-    launcherView.configure(config.getColNum(), config.getRowNum(), config.isHideDivider());
+    applyGridSize(config.getColNum(), config.getRowNum());
     launcherView.post(new Runnable() {
       @Override
       public void run() {
         launcherView.requestFocus();
       }
     });
-    dataCenter.setGridSize(config.getColNum(), config.getRowNum());
     dataCenter.setAdapter(adapter);
     dataCenter.setHideApps(config.getHideApps());
 
@@ -376,14 +375,12 @@ public class Launcher extends AppCompatActivity
 
   @Override
   public void onRowNumChanged(int rowNum) {
-    launcherView.setRowNum(rowNum);
-    dataCenter.setRowNum(rowNum);
+    applyGridSize(config.getColNum(), rowNum);
   }
 
   @Override
   public void onColNumChanged(int colNum) {
-    launcherView.setColNum(colNum);
-    dataCenter.setColNum(colNum);
+    applyGridSize(colNum, config.getRowNum());
   }
 
   @Override
@@ -456,6 +453,21 @@ public class Launcher extends AppCompatActivity
     if (adapter == null || iconCache == null) return;
     iconCache.refreshCustomIcons(getExternalCacheDir() != null, config.isShowCustomIcon());
     adapter.refreshDisplay();
+  }
+
+  private void applyGridSize(int colNum, int rowNum) {
+    if (launcherView != null) {
+      int displayColNum = colNum;
+      int displayRowNum = rowNum;
+      if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        displayColNum = rowNum;
+        displayRowNum = colNum;
+      }
+      launcherView.configure(displayColNum, displayRowNum, config.isHideDivider());
+    }
+    if (dataCenter != null) {
+      dataCenter.setGridSize(colNum, rowNum);
+    }
   }
 
   private void applyScreenOrientation(int mode) {

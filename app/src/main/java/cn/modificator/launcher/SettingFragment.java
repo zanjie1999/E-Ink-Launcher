@@ -150,7 +150,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     hideDivider.getPaint().setStrikeThruText(config.isHideDivider());
     hideDivider.setText(config.isHideDivider() ? "显示分隔线" : "隐藏分隔线");
     showCustomIcon.getPaint().setStrikeThruText(config.isShowCustomIcon());
-    clockShowSeconds.getPaint().setStrikeThruText(config.isClockShowSeconds());
+    updateClockShowSecondsState();
     fontControl.setProgress((int) ((config.getFontSize() - 10) * 10));
   }
 
@@ -413,8 +413,12 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   private void handleToggleClockShowSeconds() {
     boolean newValue = !config.isClockShowSeconds();
     config.setClockShowSeconds(newValue);
-    clockShowSeconds.getPaint().setStrikeThruText(newValue);
+    updateClockShowSecondsState();
     listener.onClockShowSecondsChanged(newValue);
+  }
+
+  private void updateClockShowSecondsState() {
+    clockShowSeconds.getPaint().setStrikeThruText(!config.isClockShowSeconds());
   }
 
   @Override
