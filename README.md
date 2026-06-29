@@ -1,5 +1,7 @@
 ## 咩E-Ink Launcher
 
+<img width="240" height="240" src="https://github.com/user-attachments/assets/e1418577-733d-48d4-9b95-1a3808b62905" />
+
 因为原作者已经不维护了，这是咩咩自用的修改版  
 哔哩哔哩：郑羊羊  
 基于E-Ink Launcher 0.1.8.6
@@ -14,12 +16,13 @@
 7. 点击底部时钟可以打开全屏时钟模式，点击时间返回，点击日期旋转屏幕
 8. 屏幕方向设置，在启动时设置屏幕方向，避免因应用旋转导致桌面跟随应用方向
 
--------------------------------------------
+### 应用列表
+截图看起来不是很白，是投屏视频编码的问题  
 
-`E-Ink Launcher` is an Android launcher for Electronic paper book
+<img width="300" src="https://github.com/user-attachments/assets/88394b9f-c6c9-4e44-a81a-068642fa2f98" />
 
-this verison is support end,new version in branch [master](https://github.com/Modificator/E-Ink-Launcher)
+### 时钟模式
+点击底部时钟可以打开全屏时钟模式，点击时间返回，点击日期旋转屏幕  
+方向键旋转，确定和返回键回到应用列表  
 
-join telegram group https://t.me/EInkLauncher
-
-![E-Ink Launcher](app/release/preview.png)
+<img height="300" src="https://github.com/user-attachments/assets/ed0c218c-932d-4f31-a6d7-24e6a6c30b28" />
