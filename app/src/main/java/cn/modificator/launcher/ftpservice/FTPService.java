@@ -154,7 +154,7 @@ public class FTPService extends Service implements Runnable {
     try {
       serverFactory.getUserManager().save(user);
     } catch (FtpException e) {
-      e.printStackTrace();
+      Log.e(TAG, "Failed to save FTP user", e);
     }
     ListenerFactory fac = new ListenerFactory();
 
@@ -180,7 +180,7 @@ public class FTPService extends Service implements Runnable {
       server.start();
       sendBroadcast(new Intent(FTPService.ACTION_STARTED));
     } catch (Exception e) {
-      e.printStackTrace();
+      Log.e(TAG, "Failed to start FTP server", e);
       server = null;
       serverThread = null;
       stopForegroundCompat();
@@ -297,7 +297,7 @@ public class FTPService extends Service implements Runnable {
         Method method = wm.getClass().getDeclaredMethod("isWifiApEnabled");
         connected = (Boolean) method.invoke(wm);
       } catch (Exception e) {
-        e.printStackTrace();
+        Log.e(TAG, "Failed to check Wi-Fi AP state", e);
       }
     }
     if (!connected) {
@@ -310,7 +310,7 @@ public class FTPService extends Service implements Runnable {
           }
         }
       } catch (SocketException e) {
-        e.printStackTrace();
+        Log.e(TAG, "Failed to inspect network interfaces for USB AP", e);
       }
     }
     return connected;
@@ -356,7 +356,7 @@ public class FTPService extends Service implements Runnable {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      Log.e(TAG, "Failed to get local inet address", e);
     }
     return null;
   }

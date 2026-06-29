@@ -19,10 +19,14 @@
 -keep public class cn.modificator.launcher.R$*{
     public static final int *;
 }
-#-keep class org.apache.** {*;}
-#-keep interface org.apache.** {*;}
-#-dontwarn org.apache.**
-#-dontwarn org.slf4j.**
+-keep class org.apache.ftpserver.** { *; }
+-keep interface org.apache.ftpserver.** { *; }
+-keep class org.apache.mina.** { *; }
+-keep interface org.apache.mina.** { *; }
+-keep class org.slf4j.** { *; }
+-keep interface org.slf4j.** { *; }
+-dontwarn org.apache.**
+-dontwarn org.slf4j.**
 
 -keeppackagenames doNotKeepAThing
 -renamesourcefileattribute SourceFile

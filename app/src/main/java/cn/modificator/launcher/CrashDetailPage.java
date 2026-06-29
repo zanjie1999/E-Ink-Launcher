@@ -10,6 +10,7 @@ import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.style.AbsoluteSizeSpan;
 import android.text.style.StyleSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,8 @@ import java.io.FileReader;
 import androidx.annotation.Nullable;
 
 public class CrashDetailPage extends Activity {
+
+  private static final String TAG = "CrashDetailPage";
 
   private TextView btnReLaunch;
   private TextView tvContent;
@@ -79,7 +82,7 @@ public class CrashDetailPage extends Activity {
     tvContent.append(titleSpan);
     tvContent.append("\nーーーーーーーーーーーーーーーーーーーー\n");
     tvContent.append("Please screenshot and give me feedback.\n");
-    tvContent.append("哔哩哔哩/公众号：郑羊羊\n");
+    tvContent.append("哔哩哔哩/微信公众号：郑羊羊\n");
     tvContent.append("酷安：zyyme\n");
     tvContent.append("Github issues : https://github.com/zanjie1999/E-Ink-Launcher\n");
     tvContent.append("well it's already open source\n");
@@ -96,7 +99,7 @@ public class CrashDetailPage extends Activity {
         tvContent.append(new String(readData));
         reader.close();
       } catch (Throwable e) {
-        e.printStackTrace();
+        Log.e(TAG, "Failed to read crash file: " + crashFile, e);
       }
     }
   }
