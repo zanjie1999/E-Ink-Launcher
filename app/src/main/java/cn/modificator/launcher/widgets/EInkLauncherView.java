@@ -131,6 +131,14 @@ public class EInkLauncherView extends ViewGroup {
     resetGrid();
   }
 
+  public int getColNum() {
+    return colNum;
+  }
+
+  public int getRowNum() {
+    return rowNum;
+  }
+
   // =========================================================================
   // onLayout / onMeasure
   // =========================================================================

@@ -910,7 +910,7 @@ public class Launcher extends AppCompatActivity
     int selectedIndex = launcherView.getSelectedIndex();
     if (selectedIndex < 0) return;
 
-    int colNum = config.getColNum();
+    int colNum = launcherView.getColNum();
     if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && selectedIndex % colNum == 0) {
       if (dataCenter.showLastPage()) {
         launcherView.setSelectedIndex(launcherView.getCrossPageTargetIndex(selectedIndex, false));
@@ -940,13 +940,13 @@ public class Launcher extends AppCompatActivity
 
   private boolean isOnTopRow() {
     int selectedIndex = launcherView.getSelectedIndex();
-    return selectedIndex >= 0 && selectedIndex < config.getColNum();
+    return selectedIndex >= 0 && selectedIndex < launcherView.getColNum();
   }
 
   private boolean isOnBottomRow() {
     int selectedIndex = launcherView.getSelectedIndex();
     if (selectedIndex < 0) return false;
-    int colNum = config.getColNum();
+    int colNum = launcherView.getColNum();
     return selectedIndex + colNum >= launcherView.getDisplayedItemCount();
   }
 
