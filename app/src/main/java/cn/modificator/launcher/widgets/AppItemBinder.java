@@ -5,6 +5,8 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -13,6 +15,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import cn.modificator.launcher.R;
 import cn.modificator.launcher.model.AppDataCenter;
@@ -53,6 +58,15 @@ public class AppItemBinder {
 
   private final PackageManager packageManager;
   private final Set<String> hideAppPkg = new HashSet<>();
+  private final Handler mainHandler = new Handler(Looper.getMainLooper());
+  private final ExecutorService iconLoadExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread thread = new Thread(r, "app-icon-loader");
+      thread.setPriority(Thread.NORM_PRIORITY - 2);
+      return thread;
+    }
+  });
 
   private Callback callback;
   private IconCache iconCache;
@@ -181,7 +195,7 @@ public class AppItemBinder {
       loadIcon(holder.appImage, pkg, R.drawable.ic_onekeyclear, customIcons);
       holder.appName.setText(R.string.item_clear);
     } else {
-      loadIcon(holder.appImage, pkg, info, customIcons);
+      loadIconAsync(holder.appImage, pkg, info, customIcons);
       holder.appName.setText(iconCache != null
           ? iconCache.getLabel(pkg, info, packageManager)
           : info.loadLabel(packageManager));
@@ -225,7 +239,7 @@ public class AppItemBinder {
   }
 
   private void loadIcon(ImageView iv, String pkg, ResolveInfo info,
-                         Map<String, File> customIcons) {
+                          Map<String, File> customIcons) {
     File custom = customIcons != null ? customIcons.get(pkg) : null;
     if (custom != null) {
       iv.setImageURI(Uri.fromFile(custom));
@@ -235,6 +249,46 @@ public class AppItemBinder {
           : info.loadIcon(packageManager);
       iv.setImageDrawable(icon);
     }
+  }
+
+  private void loadIconAsync(final ImageView iv, final String pkg, final ResolveInfo info,
+                             Map<String, File> customIcons) {
+    File custom = customIcons != null ? customIcons.get(pkg) : null;
+    if (custom != null) {
+      iv.setTag(R.id.appImage, pkg);
+      iv.setImageURI(Uri.fromFile(custom));
+      return;
+    }
+
+    iv.setTag(R.id.appImage, pkg);
+    Drawable cached = iconCache != null ? iconCache.getCachedIcon(pkg) : null;
+    if (cached != null) {
+      iv.setImageDrawable(cached);
+      return;
+    }
+    iv.setImageDrawable(null);
+    iconLoadExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        final Drawable icon = iconCache != null
+            ? iconCache.getIcon(pkg, info, packageManager)
+            : info.loadIcon(packageManager);
+        mainHandler.post(new Runnable() {
+          @Override
+          public void run() {
+            Object boundPackage = iv.getTag(R.id.appImage);
+            if (pkg.equals(boundPackage)) {
+              iv.setImageDrawable(icon);
+            }
+          }
+        });
+      }
+    });
+  }
+
+  public void shutdown() {
+    mainHandler.removeCallbacksAndMessages(null);
+    iconLoadExecutor.shutdownNow();
   }
 
   // =========================================================================

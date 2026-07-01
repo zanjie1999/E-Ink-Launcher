@@ -91,29 +91,55 @@ public class IconCache {
   // 应用图标 & 标签缓存
   // =========================================================================
 
+  public Drawable getCachedIcon(String packageName) {
+    synchronized (drawableCache) {
+      return drawableCache.get(packageName);
+    }
+  }
+
   /** 带缓存的图标加载 */
   public Drawable getIcon(String packageName, ResolveInfo info, PackageManager pm) {
-    Drawable cached = drawableCache.get(packageName);
-    if (cached == null) {
-      cached = info.loadIcon(pm);
-      drawableCache.put(packageName, cached);
+    Drawable cached = getCachedIcon(packageName);
+    if (cached != null) {
+      return cached;
+    }
+    Drawable loaded = info.loadIcon(pm);
+    synchronized (drawableCache) {
+      cached = drawableCache.get(packageName);
+      if (cached == null) {
+        drawableCache.put(packageName, loaded);
+        cached = loaded;
+      }
     }
     return cached;
   }
 
   /** 带缓存的标签加载 */
   public CharSequence getLabel(String packageName, ResolveInfo info, PackageManager pm) {
-    CharSequence cached = labelCache.get(packageName);
-    if (cached == null) {
-      cached = info.loadLabel(pm);
-      labelCache.put(packageName, cached);
+    synchronized (labelCache) {
+      CharSequence cached = labelCache.get(packageName);
+      if (cached != null) {
+        return cached;
+      }
     }
-    return cached;
+    CharSequence loaded = info.nonLocalizedLabel != null ? info.nonLocalizedLabel : info.loadLabel(pm);
+    synchronized (labelCache) {
+      CharSequence cached = labelCache.get(packageName);
+      if (cached == null) {
+        labelCache.put(packageName, loaded);
+        cached = loaded;
+      }
+      return cached;
+    }
   }
 
   /** 清除图标和标签缓存（应用安装/卸载时调用） */
   public void clearAppCache() {
-    drawableCache.clear();
-    labelCache.clear();
+    synchronized (drawableCache) {
+      drawableCache.clear();
+    }
+    synchronized (labelCache) {
+      labelCache.clear();
+    }
   }
 }

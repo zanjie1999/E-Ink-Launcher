@@ -224,6 +224,12 @@ public class Launcher extends AppCompatActivity
   @Override
   protected void onDestroy() {
     super.onDestroy();
+    if (dataCenter != null) {
+      dataCenter.shutdown();
+    }
+    if (binder != null) {
+      binder.shutdown();
+    }
     unregisterDynamicReceivers();
     unregisterReceiver(appChangeReceiver);
   }
@@ -594,7 +600,6 @@ public class Launcher extends AppCompatActivity
             }
             config.setHideApps(new HashSet<>(hideApps));
             dataCenter.setHideApps(config.getHideApps());
-            dataCenter.refreshAppList();
           }
         })
         .setNegativeButton(R.string.dialog_uninstall, new DialogInterface.OnClickListener() {
@@ -853,7 +858,6 @@ public class Launcher extends AppCompatActivity
     config.setHideApps(hideApps);
     dataCenter.setHideApps(config.getHideApps());
     binder.setDelete(false);
-    dataCenter.refreshAppList();
     findViewById(R.id.deleteFinish).setVisibility(View.GONE);
   }
 

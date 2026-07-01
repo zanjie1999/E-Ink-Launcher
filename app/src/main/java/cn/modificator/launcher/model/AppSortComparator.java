@@ -3,7 +3,6 @@ package cn.modificator.launcher.model;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
@@ -45,10 +44,15 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
   private final int mode;
   private final PackageManager pm;
   private final Collator collator;
+  private final Map<String, String> labelCache = new HashMap<>();
   private final Map<String, Long> installTimeCache = new HashMap<>();
   private Map<String, UsageStats> usageStatsMap;
 
   public AppSortComparator(Context context, PackageManager pm, int mode) {
+    this(context, pm, mode, null);
+  }
+
+  public AppSortComparator(Context context, PackageManager pm, int mode, List<ResolveInfo> preloadApps) {
     this.mode = mode;
     this.pm = pm;
     this.collator = Collator.getInstance(Locale.getDefault());
@@ -57,6 +61,7 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
     if (needsUsageStats()) {
       usageStatsMap = queryUsageStats(context);
     }
+    preloadMetadata(preloadApps);
   }
 
   /**
@@ -116,9 +121,23 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
   }
 
   private int compareByName(ResolveInfo a, ResolveInfo b) {
-    String labelA = a.loadLabel(pm).toString();
-    String labelB = b.loadLabel(pm).toString();
+    String labelA = getLabel(a);
+    String labelB = getLabel(b);
     return collator.compare(labelA, labelB);
+  }
+
+  private String getLabel(ResolveInfo info) {
+    String key = getActivityKey(info);
+    String cached = labelCache.get(key);
+    if (cached == null) {
+      CharSequence label = info.loadLabel(pm);
+      cached = label != null ? label.toString() : "";
+      if (label != null && info.nonLocalizedLabel == null) {
+        info.nonLocalizedLabel = label;
+      }
+      labelCache.put(key, cached);
+    }
+    return cached;
   }
 
   private long getInstallTime(ResolveInfo info) {
@@ -159,6 +178,22 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
     return modeNeedsUsageStats(mode);
   }
 
+  private void preloadMetadata(List<ResolveInfo> apps) {
+    if (apps == null || apps.isEmpty()) return;
+    for (ResolveInfo info : apps) {
+      if (!isVirtual(info)) {
+        getLabel(info);
+      }
+    }
+    if (mode == SORT_INSTALL_ASC || mode == SORT_INSTALL_DESC) {
+      for (ResolveInfo info : apps) {
+        if (!isVirtual(info)) {
+          getInstallTime(info);
+        }
+      }
+    }
+  }
+
   private Map<String, UsageStats> queryUsageStats(Context context) {
     Map<String, UsageStats> map = new HashMap<>();
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) return map;
@@ -182,5 +217,10 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
       }
     }
     return map;
+  }
+
+  private String getActivityKey(ResolveInfo info) {
+    if (info.activityInfo == null) return "";
+    return info.activityInfo.packageName + "/" + info.activityInfo.name;
   }
 }
