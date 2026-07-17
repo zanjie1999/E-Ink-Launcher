@@ -27,6 +27,16 @@
     <string name="setting_hide_divider">Ukryj siatkę</string>
     <string name="setting_set_font_size">Ustaw rozmiar czcionki</string>
     <string name="setting_apps_manager">Zarządzanie aplikacjami</string>
+    <string name="setting_set_wallpaper">Ustaw tapetę</string>
+    <string name="wallpaper_target_title">Ustaw tapetę</string>
+    <string name="wallpaper_target_home">Ekran główny</string>
+    <string name="wallpaper_target_home_and_lock">Ekran główny i ekran blokady</string>
+    <string name="wallpaper_setting_success">Tapeta została ustawiona</string>
+    <string name="wallpaper_setting_failed">Nie można ustawić tapety</string>
+    <string name="wallpaper_read_failed">Nie można odczytać wybranego obrazu</string>
+    <string name="wallpaper_picker_unavailable">Brak dostępnego menedżera plików</string>
+    <string name="wallpaper_not_supported">To urządzenie nie obsługuje zmiany tapety</string>
+    <string name="wallpaper_not_allowed">Zmiana tapety jest zablokowana na tym urządzeniu</string>
     <string name="setting_column_icons">Kolumny</string>
     <string name="setting_row_icons">" Wiersze "</string>
     <string name="toast_need_wifi_connnect">Proszę włączyć Wlan!</string>

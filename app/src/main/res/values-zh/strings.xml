@@ -24,6 +24,16 @@
     <string name="setting_set_font_size">设置字体大小</string>
     <string name="setting_apps_manager">管理应用</string>
     <string name="setting_open_device_manager">打开设备管理器</string>
+    <string name="setting_set_wallpaper">设置壁纸</string>
+    <string name="wallpaper_target_title">设置壁纸</string>
+    <string name="wallpaper_target_home">仅桌面</string>
+    <string name="wallpaper_target_home_and_lock">桌面和锁屏</string>
+    <string name="wallpaper_setting_success">壁纸设置成功</string>
+    <string name="wallpaper_setting_failed">无法设置壁纸</string>
+    <string name="wallpaper_read_failed">无法读取所选图片</string>
+    <string name="wallpaper_picker_unavailable">未找到可用的文件管理器</string>
+    <string name="wallpaper_not_supported">此设备不支持修改壁纸</string>
+    <string name="wallpaper_not_allowed">系统禁止修改壁纸</string>
     <string name="setting_column_icons">每列图标(长)</string>
     <string name="toast_need_wifi_connnect">大哥诶，麻烦先把WIFI连上吧</string>
     <string name="setting_row_icons">每行图标(短)</string>

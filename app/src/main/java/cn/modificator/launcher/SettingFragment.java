@@ -2,17 +2,25 @@ package cn.modificator.launcher;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.WallpaperManager;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,10 +36,27 @@ import cn.modificator.launcher.ftpservice.FTPService;
 import cn.modificator.launcher.model.AppSortComparator;
 import cn.modificator.launcher.model.WifiControl;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+
 /**
  * 设置页面 Fragment。
  */
 public class SettingFragment extends Fragment implements View.OnClickListener {
+
+  private static final String TAG = "SettingFragment";
+  private static final int REQUEST_PICK_WALLPAPER = 10003;
+  private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
+  private static final ExecutorService WALLPAPER_EXECUTOR =
+      Executors.newSingleThreadExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable runnable) {
+          return new Thread(runnable, "wallpaper-setter");
+        }
+      });
 
   /** 设置变更回调接口：宿主 Activity 应实现此接口以响应设置变更。 */
   public interface OnSettingChangeListener {
@@ -71,6 +96,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   private View helpAbout;
   private View menuFtp;
   private View openDeviceManager;
+  private View setWallpaper;
   private View showWifiName;
 
   @SuppressWarnings("deprecation")
@@ -131,6 +157,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     helpAbout = rootView.findViewById(R.id.helpAbout);
     menuFtp = rootView.findViewById(R.id.menu_ftp);
     openDeviceManager = rootView.findViewById(R.id.openDeviceManager);
+    setWallpaper = rootView.findViewById(R.id.setWallpaper);
 
     showStatusBar.setOnClickListener(this);
     hideDivider.setOnClickListener(this);
@@ -142,6 +169,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     helpAbout.setOnClickListener(this);
     menuFtp.setOnClickListener(this);
     openDeviceManager.setOnClickListener(this);
+    setWallpaper.setOnClickListener(this);
 
     initDpadFocus(toBack, btnHideFontControl);
 
@@ -169,6 +197,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
         changeFontSize,
         deleteApp,
         themeModeSpinner,
+        setWallpaper,
         openDeviceManager,
         helpAbout,
         menuFtp
@@ -193,11 +222,11 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   }
 
   private void initSpinners() {
-    rowNumSpinner.setSelection(config.getRowNum() - 2, false);
+    rowNumSpinner.setSelection(config.getRowNum() - 1, false);
     rowNumSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        int rowNum = position + 2;
+        int rowNum = position + 1;
         config.setRowNum(rowNum);
         listener.onRowNumChanged(rowNum);
       }
@@ -207,11 +236,11 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
       }
     });
 
-    colNumSpinner.setSelection(config.getColNum() - 2, false);
+    colNumSpinner.setSelection(config.getColNum() - 1, false);
     colNumSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        int colNum = position + 2;
+        int colNum = position + 1;
         config.setColNum(colNum);
         listener.onColNumChanged(colNum);
       }
@@ -349,6 +378,8 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
       handleToggleCustomIcon();
     } else if (id == R.id.clockShowSeconds) {
       handleToggleClockShowSeconds();
+    } else if (id == R.id.setWallpaper) {
+      handleSetWallpaper();
     } else if (id == R.id.openDeviceManager) {
       startActivity(new Intent().setComponent(
           new ComponentName("com.android.settings", "com.android.settings.DeviceAdminSettings")));
@@ -419,6 +450,126 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
 
   private void updateClockShowSecondsState() {
     clockShowSeconds.getPaint().setStrikeThruText(!config.isClockShowSeconds());
+  }
+
+  private void handleSetWallpaper() {
+    Activity activity = getActivity();
+    if (activity == null) return;
+
+    WallpaperManager wallpaperManager = WallpaperManager.getInstance(activity.getApplicationContext());
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !wallpaperManager.isWallpaperSupported()) {
+      Toast.makeText(activity, R.string.wallpaper_not_supported, Toast.LENGTH_SHORT).show();
+      return;
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !wallpaperManager.isSetWallpaperAllowed()) {
+      Toast.makeText(activity, R.string.wallpaper_not_allowed, Toast.LENGTH_SHORT).show();
+      return;
+    }
+
+    Intent pickerIntent = new Intent(
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
+            ? Intent.ACTION_OPEN_DOCUMENT
+            : Intent.ACTION_GET_CONTENT);
+    pickerIntent.addCategory(Intent.CATEGORY_OPENABLE);
+    pickerIntent.setType("image/*");
+    pickerIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+    try {
+      startActivityForResult(pickerIntent, REQUEST_PICK_WALLPAPER);
+    } catch (ActivityNotFoundException e) {
+      Toast.makeText(activity, R.string.wallpaper_picker_unavailable, Toast.LENGTH_SHORT).show();
+    }
+  }
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (requestCode != REQUEST_PICK_WALLPAPER || resultCode != Activity.RESULT_OK) return;
+
+    Uri uri = data != null ? data.getData() : null;
+    if (uri == null) {
+      Activity activity = getActivity();
+      if (activity != null) {
+        Toast.makeText(activity, R.string.wallpaper_read_failed, Toast.LENGTH_SHORT).show();
+      }
+      return;
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      showWallpaperTargetDialog(uri);
+    } else {
+      applyWallpaper(uri, WallpaperManager.FLAG_SYSTEM);
+    }
+  }
+
+  private void showWallpaperTargetDialog(final Uri uri) {
+    Activity activity = getActivity();
+    if (activity == null) return;
+
+    CharSequence[] targets = new CharSequence[] {
+        getString(R.string.wallpaper_target_home),
+        getString(R.string.wallpaper_target_home_and_lock)
+    };
+    new AlertDialog.Builder(activity)
+        .setTitle(R.string.wallpaper_target_title)
+        .setItems(targets, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            int flags = which == 0
+                ? WallpaperManager.FLAG_SYSTEM
+                : WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK;
+            applyWallpaper(uri, flags);
+          }
+        })
+        .setNegativeButton(R.string.dialog_cancel, null)
+        .show();
+  }
+
+  private void applyWallpaper(final Uri uri, final int flags) {
+    Activity activity = getActivity();
+    if (activity == null) return;
+    final Context appContext = activity.getApplicationContext();
+
+    WALLPAPER_EXECUTOR.execute(new Runnable() {
+      @Override
+      public void run() {
+        InputStream inputStream;
+        try {
+          inputStream = appContext.getContentResolver().openInputStream(uri);
+        } catch (IOException | SecurityException e) {
+          Log.e(TAG, "Unable to open selected wallpaper", e);
+          postWallpaperToast(appContext, R.string.wallpaper_read_failed);
+          return;
+        }
+
+        if (inputStream == null) {
+          postWallpaperToast(appContext, R.string.wallpaper_read_failed);
+          return;
+        }
+
+        try (InputStream stream = inputStream) {
+          WallpaperManager wallpaperManager = WallpaperManager.getInstance(appContext);
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            wallpaperManager.setStream(stream, null, true, flags);
+          } else {
+            wallpaperManager.setStream(stream);
+          }
+          postWallpaperToast(appContext, R.string.wallpaper_setting_success);
+        } catch (IOException | SecurityException | IllegalArgumentException e) {
+          Log.e(TAG, "Unable to set wallpaper", e);
+          postWallpaperToast(appContext, R.string.wallpaper_setting_failed);
+        }
+      }
+    });
+  }
+
+  private static void postWallpaperToast(final Context context, final int messageResId) {
+    MAIN_HANDLER.post(new Runnable() {
+      @Override
+      public void run() {
+        Toast.makeText(context, messageResId, Toast.LENGTH_SHORT).show();
+      }
+    });
   }
 
   @Override

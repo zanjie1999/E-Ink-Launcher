@@ -389,11 +389,17 @@ public class EInkLauncherView extends ViewGroup {
    * @return 1 = 上一页, -1 = 下一页, 0 = 无有效滑动
    */
   private int detectSwipe(float upX, float upY) {
-    if (swipeThreshold <= 0) return 0;
     float dx = upX - touchDownX;
     float dy = upY - touchDownY;
-    if (dx > swipeThreshold || dy > swipeThreshold) return 1;
-    if (dx < -swipeThreshold || dy < -swipeThreshold) return -1;
+    return detectSwipeDelta(dx, dy, swipeThreshold);
+  }
+
+  private static int detectSwipeDelta(float dx, float dy, float threshold) {
+    if (threshold <= 0) return 0;
+
+    float primaryDelta = Math.abs(dx) >= Math.abs(dy) ? dx : dy;
+    if (primaryDelta > threshold) return 1;
+    if (primaryDelta < -threshold) return -1;
     return 0;
   }
 }

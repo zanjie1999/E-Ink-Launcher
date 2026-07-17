@@ -25,6 +25,16 @@
     <string name="path">경로</string>
     <string name="power_title">기기 종료</string>
     <string name="setting_apps_manager">앱 관리자</string>
+    <string name="setting_set_wallpaper">배경화면 설정</string>
+    <string name="wallpaper_target_title">배경화면 설정</string>
+    <string name="wallpaper_target_home">홈 화면</string>
+    <string name="wallpaper_target_home_and_lock">홈 화면 및 잠금 화면</string>
+    <string name="wallpaper_setting_success">배경화면을 설정했습니다</string>
+    <string name="wallpaper_setting_failed">배경화면을 설정할 수 없습니다</string>
+    <string name="wallpaper_read_failed">선택한 이미지를 읽을 수 없습니다</string>
+    <string name="wallpaper_picker_unavailable">사용 가능한 파일 관리자가 없습니다</string>
+    <string name="wallpaper_not_supported">이 기기에서는 배경화면 변경을 지원하지 않습니다</string>
+    <string name="wallpaper_not_allowed">이 기기에서는 배경화면 변경이 허용되지 않습니다</string>
     <string name="setting_cloud_manager_off">클라우드 관리자 - 꺼짐</string>
     <string name="setting_cloud_manager_on">클라우드 관리자 - 켜짐</string>
     <string name="setting_cloud_manager_wifi_off">"클라우드 관리자

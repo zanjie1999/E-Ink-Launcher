@@ -28,6 +28,16 @@
     <string name="setting_set_font_size">Change Font Size</string>
     <string name="setting_apps_manager">Apps Manager</string>
     <string name="setting_open_device_manager">Open Device Manager</string>
+    <string name="setting_set_wallpaper">Set wallpaper</string>
+    <string name="wallpaper_target_title">Set wallpaper</string>
+    <string name="wallpaper_target_home">Home screen</string>
+    <string name="wallpaper_target_home_and_lock">Home and lock screens</string>
+    <string name="wallpaper_setting_success">Wallpaper set</string>
+    <string name="wallpaper_setting_failed">Unable to set wallpaper</string>
+    <string name="wallpaper_read_failed">Unable to read the selected image</string>
+    <string name="wallpaper_picker_unavailable">No file manager available</string>
+    <string name="wallpaper_not_supported">Wallpaper changes are not supported on this device</string>
+    <string name="wallpaper_not_allowed">Wallpaper changes are disabled on this device</string>
     <string name="setting_column_icons">Column</string>
     <string name="setting_row_icons">"   Row   "</string>
     <string name="toast_need_wifi_connnect">Please connect Wlan!</string>
