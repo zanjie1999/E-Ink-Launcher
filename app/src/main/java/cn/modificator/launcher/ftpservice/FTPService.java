@@ -20,8 +20,11 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.content.pm.ServiceInfo;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import androidx.core.app.ServiceCompat;
 
 import org.apache.ftpserver.DataConnectionConfigurationFactory;
 import org.apache.ftpserver.ConnectionConfigFactory;
@@ -263,7 +266,17 @@ public class FTPService extends Service implements Runnable {
         .setContentText("网络传书已开启")
         .setOngoing(true)
         .build();
-    startForeground(NOTIFICATION_ID, notification);
+    // Android 14 (API 34+) requires a foreground service *type* at startForeground time,
+    // otherwise the platform throws MissingForegroundServiceTypeException and crashes
+    // the whole launcher. dataSync matches an FTP file-transfer server. The type is also
+    // declared on the <service> in the manifest; passing it here is belt-and-suspenders
+    // and is required when started via startForegroundService from a broadcast receiver.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      ServiceCompat.startForeground(this, NOTIFICATION_ID, notification,
+          ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+    } else {
+      startForeground(NOTIFICATION_ID, notification);
+    }
   }
 
   private void stopForegroundCompat() {

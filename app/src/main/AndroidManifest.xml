@@ -18,6 +18,10 @@
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <!-- FTP server (网络传书) runs as a data-sync foreground service on Android 14+.
+         Without this type the platform throws MissingForegroundServiceTypeException
+         and crashes the app the moment the user toggles FTP on. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
@@ -64,7 +68,8 @@
         <service
             android:name=".ftpservice.FTPService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            android:foregroundServiceType="dataSync" />
 
         <receiver
             android:name=".model.AdminReceiver"

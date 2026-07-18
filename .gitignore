@@ -14,3 +14,6 @@ config.gradle
 KeyStore.key
 release/output.json
 app/release
+# local build / IDE artifacts
+_build.log
+_crash/
