@@ -26,6 +26,7 @@ public class Config {
   public static final String KEY_THEME_MODE = "themeMode";
   public static final String KEY_CLOCK_SHOW_SECONDS = "launcherClockShowSeconds";
   public static final String KEY_SCREEN_ORIENTATION = "launcherScreenOrientation";
+  public static final String KEY_START_AT_BOOT = "launcherStartAtBoot";
 
   // ---- 默认值 ----
   private static final int DEFAULT_COL_NUM = 5;
@@ -39,6 +40,7 @@ public class Config {
   private static final int DEFAULT_THEME_MODE = 3;
   private static final boolean DEFAULT_CLOCK_SHOW_SECONDS = false;
   private static final int DEFAULT_SCREEN_ORIENTATION = 0;
+  private static final boolean DEFAULT_START_AT_BOOT = false;
 
   private static final String PREFS_FILE = "launcherPropertyFile";
 
@@ -53,6 +55,7 @@ public class Config {
   private boolean showStatusBar;
   private boolean showCustomIcon;
   private boolean clockShowSeconds;
+  private boolean startAtBoot;
   private int sortMode = -1;
   private int themeMode = -1;
   private int screenOrientation = -1;
@@ -66,6 +69,7 @@ public class Config {
     this.showStatusBar = prefs.getBoolean(KEY_SHOW_STATUS_BAR, DEFAULT_SHOW_STATUS_BAR);
     this.showCustomIcon = prefs.getBoolean(KEY_SHOW_CUSTOM_ICON, DEFAULT_SHOW_CUSTOM_ICON);
     this.clockShowSeconds = prefs.getBoolean(KEY_CLOCK_SHOW_SECONDS, DEFAULT_CLOCK_SHOW_SECONDS);
+    this.startAtBoot = prefs.getBoolean(KEY_START_AT_BOOT, DEFAULT_START_AT_BOOT);
     this.appNameLines = prefs.getInt(KEY_APP_NAME_LINES, DEFAULT_APP_NAME_LINES);
   }
 
@@ -218,6 +222,17 @@ public class Config {
   public void setClockShowSeconds(boolean show) {
     this.clockShowSeconds = show;
     prefs.edit().putBoolean(KEY_CLOCK_SHOW_SECONDS, show).apply();
+  }
+
+  // ---- 开机启动 ----
+
+  public boolean isStartAtBoot() {
+    return startAtBoot;
+  }
+
+  public void setStartAtBoot(boolean startAtBoot) {
+    this.startAtBoot = startAtBoot;
+    prefs.edit().putBoolean(KEY_START_AT_BOOT, startAtBoot).apply();
   }
 
   // ---- 应用名行数 ----

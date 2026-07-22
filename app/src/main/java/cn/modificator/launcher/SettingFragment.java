@@ -90,6 +90,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   private TextView showStatusBar;
   private TextView showCustomIcon;
   private TextView clockShowSeconds;
+  private TextView startAtBoot;
   private Config config;
   private View changeFontSize;
   private View deleteApp;
@@ -141,6 +142,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     showStatusBar = rootView.findViewById(R.id.showStatusBar);
     showCustomIcon = rootView.findViewById(R.id.showCustomIcon);
     clockShowSeconds = rootView.findViewById(R.id.clockShowSeconds);
+    startAtBoot = rootView.findViewById(R.id.startAtBoot);
     showWifiName = rootView.findViewById(R.id.showWifiName);
     ftpStatus = rootView.findViewById(R.id.ftp_status);
     ftpAddr = rootView.findViewById(R.id.ftp_addr);
@@ -163,6 +165,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     hideDivider.setOnClickListener(this);
     showCustomIcon.setOnClickListener(this);
     clockShowSeconds.setOnClickListener(this);
+    startAtBoot.setOnClickListener(this);
     showWifiName.setOnClickListener(this);
     changeFontSize.setOnClickListener(this);
     deleteApp.setOnClickListener(this);
@@ -179,6 +182,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     hideDivider.setText(config.isHideDivider() ? "显示分隔线" : "隐藏分隔线");
     showCustomIcon.getPaint().setStrikeThruText(config.isShowCustomIcon());
     updateClockShowSecondsState();
+    updateStartAtBootState();
     fontControl.setProgress((int) ((config.getFontSize() - 10) * 10));
   }
 
@@ -194,6 +198,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
         showWifiName,
         showCustomIcon,
         clockShowSeconds,
+        startAtBoot,
         changeFontSize,
         deleteApp,
         themeModeSpinner,
@@ -378,6 +383,8 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
       handleToggleCustomIcon();
     } else if (id == R.id.clockShowSeconds) {
       handleToggleClockShowSeconds();
+    } else if (id == R.id.startAtBoot) {
+      handleToggleStartAtBoot();
     } else if (id == R.id.setWallpaper) {
       handleSetWallpaper();
     } else if (id == R.id.openDeviceManager) {
@@ -450,6 +457,15 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
 
   private void updateClockShowSecondsState() {
     clockShowSeconds.getPaint().setStrikeThruText(!config.isClockShowSeconds());
+  }
+
+  private void handleToggleStartAtBoot() {
+    config.setStartAtBoot(!config.isStartAtBoot());
+    updateStartAtBootState();
+  }
+
+  private void updateStartAtBootState() {
+    startAtBoot.getPaint().setStrikeThruText(!config.isStartAtBoot());
   }
 
   private void handleSetWallpaper() {
