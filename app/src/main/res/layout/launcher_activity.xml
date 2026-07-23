@@ -22,10 +22,12 @@
         android:background="@color/dividerColor" />
 
     <FrameLayout
+        android:id="@+id/footerContainer"
         android:layout_width="match_parent"
         android:layout_height="45dp">
 
         <LinearLayout
+            android:id="@+id/footerContent"
             android:layout_width="match_parent"
             android:layout_height="45dp"
             android:visibility="visible">
@@ -37,7 +39,8 @@
                 android:gravity="center"
                 android:text="1/1"
                 android:textColor="@color/textColor"
-                android:textSize="17sp" />
+                android:textSize="17sp"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/textClock"
@@ -48,15 +51,17 @@
                 android:gravity="center"
                 android:paddingLeft="8dp"
                 android:paddingRight="8dp"
+                android:singleLine="true"
                 android:textColor="@color/textColor"
                 android:textSize="16sp"/>
 
             <Space
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1" />
 
             <LinearLayout
+                android:id="@+id/batteryContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginRight="5dp"
@@ -75,7 +80,8 @@
                     android:layout_height="wrap_content"
                     android:text="充电中"
                     android:textColor="@color/textColor"
-                    android:textSize="9sp" />
+                    android:textSize="9sp"
+                    android:visibility="gone" />
             </LinearLayout>
 
 

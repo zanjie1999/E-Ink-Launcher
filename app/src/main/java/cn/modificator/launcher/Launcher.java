@@ -25,6 +25,7 @@ import android.os.PowerManager;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -67,6 +68,9 @@ public class Launcher extends AppCompatActivity
 
   // ---- Views ----
   private EInkLauncherView launcherView;
+  private View footerContainer;
+  private View footerContent;
+  private View batteryContainer;
   private TextView pageStatus;
   private BatteryView batteryProgress;
   private TextView batteryStatus;
@@ -89,6 +93,18 @@ public class Launcher extends AppCompatActivity
   private long handledLauncherKeyDownTime = 0L;
   private final Handler clockHandler = new Handler(Looper.getMainLooper());
   private boolean clockTickerRunning = false;
+  private boolean batteryStatusRequestedVisible = false;
+  private int settingIconNormalWidth;
+  private int settingIconNormalHeight;
+  private int settingIconNormalHorizontalPadding;
+  private int settingIconNormalVerticalPadding;
+  private int batteryIconNormalWidth;
+  private int batteryIconNormalHeight;
+  private int batteryContainerNormalLeftMargin;
+  private int batteryContainerNormalRightMargin;
+  private int pageStatusNormalWidth;
+  private float pageStatusNormalTextSize;
+  private int footerNormalHeight;
 
   // ---- Device Admin ----
   private DevicePolicyManager policyManager;
@@ -276,6 +292,9 @@ public class Launcher extends AppCompatActivity
     launcherView.setFocusable(true);
     launcherView.setFocusableInTouchMode(true);
     launcherView.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+    footerContainer = findViewById(R.id.footerContainer);
+    footerContent = findViewById(R.id.footerContent);
+    batteryContainer = findViewById(R.id.batteryContainer);
     pageStatus = findViewById(R.id.pageStatus);
     batteryProgress = findViewById(R.id.batteryProgress);
     batteryStatus = findViewById(R.id.batteryStatus);
@@ -284,9 +303,31 @@ public class Launcher extends AppCompatActivity
     textClock.setClickable(true);
 
     settingIcon = findViewById(R.id.toSetting);
+    settingIconNormalWidth = settingIcon.getLayoutParams().width;
+    settingIconNormalHeight = settingIcon.getLayoutParams().height;
+    settingIconNormalHorizontalPadding = settingIcon.getPaddingLeft();
+    settingIconNormalVerticalPadding = settingIcon.getPaddingTop();
+    batteryIconNormalWidth = batteryProgress.getLayoutParams().width;
+    batteryIconNormalHeight = batteryProgress.getLayoutParams().height;
+    ViewGroup.MarginLayoutParams batteryParams =
+        (ViewGroup.MarginLayoutParams) batteryContainer.getLayoutParams();
+    batteryContainerNormalLeftMargin = batteryParams.leftMargin;
+    batteryContainerNormalRightMargin = batteryParams.rightMargin;
+    pageStatusNormalWidth = pageStatus.getLayoutParams().width;
+    pageStatusNormalTextSize = pageStatus.getTextSize();
+    footerNormalHeight = footerContent.getLayoutParams().height;
     settingIcon.setImageDrawable(
         Utils.tintDrawable(getResources().getDrawable(R.drawable.navibar_icon_settings_highlight),
             ColorStateList.valueOf(getResources().getColor(R.color.textColor))));
+    footerContent.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+      @Override
+      public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                 int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        if (right - left != oldRight - oldLeft) {
+          updateTimeShow();
+        }
+      }
+    });
 
     // 配置 Binder、Adapter、View
     iconCache = new IconCache();
@@ -476,6 +517,9 @@ public class Launcher extends AppCompatActivity
     if (dataCenter != null) {
       dataCenter.setGridSize(colNum, rowNum);
     }
+    if (calendar != null) {
+      updateTimeShow();
+    }
   }
 
   private void applyScreenOrientation(int mode) {
@@ -623,21 +667,161 @@ public class Launcher extends AppCompatActivity
     boolean is24Hour = DateFormat.is24HourFormat(this);
     boolean showSeconds = config != null && config.isClockShowSeconds();
     calendar.setTimeInMillis(System.currentTimeMillis());
+    Locale locale = Locale.getDefault();
 
-    StringBuilder sb = new StringBuilder("yyyy-MM-dd ");
-    if (!is24Hour && isChina) {
-      sb.append(Utils.getAMPMCNString(calendar.get(Calendar.HOUR), calendar.get(Calendar.AM_PM)));
-    }
-    sb.append(is24Hour ? "H:mm" : "h:mm");
+    String dateText = new SimpleDateFormat("yyyy-MM-dd", locale).format(calendar.getTime());
+    StringBuilder timeFormat = new StringBuilder(is24Hour ? "H:mm" : "h:mm");
     if (showSeconds) {
-      sb.append(":ss");
+      timeFormat.append(":ss");
+    }
+    String plainTimeText = new SimpleDateFormat(
+        timeFormat.toString(), locale).format(calendar.getTime());
+    String timeText = plainTimeText;
+    if (!is24Hour && isChina) {
+      timeText = Utils.getAMPMCNString(
+          calendar.get(Calendar.HOUR), calendar.get(Calendar.AM_PM)) + timeText;
     }
     if (!is24Hour && !isChina) {
-      sb.append(" a");
+      timeText += new SimpleDateFormat(" a", locale).format(calendar.getTime());
     }
-    sb.append(" EEEE");
+    String weekdayText = new SimpleDateFormat("EEEE", locale).format(calendar.getTime());
 
-    textClock.setText(new SimpleDateFormat(sb.toString(), Locale.getDefault()).format(calendar.getTime()));
+    updateFooterLayout(dateText, plainTimeText, timeText, weekdayText);
+  }
+
+  private void updateFooterLayout(String dateText, String plainTimeText,
+                                  String timeText, String weekdayText) {
+    textClock.setText(plainTimeText);
+    textClock.setVisibility(View.VISIBLE);
+    int availableWidth = footerContent.getWidth()
+        - footerContent.getPaddingLeft() - footerContent.getPaddingRight();
+    if (availableWidth <= 0) return;
+
+    int plainTimeWidth = measureClockWidth(plainTimeText);
+    int timeWidth = measureClockWidth(timeText);
+
+    int normalControlsWidth = settingIconNormalWidth + batteryIconNormalWidth
+        + batteryContainerNormalLeftMargin + batteryContainerNormalRightMargin
+        + pageStatusNormalWidth;
+    float controlsScale = normalControlsWidth == 0 ? 1f
+        : Math.min(1f, Math.max(0f,
+            (availableWidth - plainTimeWidth) / (float) normalControlsWidth));
+    int controlsWidth = updateFooterControls(controlsScale);
+
+    boolean showTimePeriod = controlsWidth + timeWidth <= availableWidth;
+    String visibleTimeText = showTimePeriod ? timeText : plainTimeText;
+    String dateAndTime = dateText + " " + visibleTimeText;
+    String fullClock = dateAndTime + " " + weekdayText;
+    int dateAndTimeWidth = measureClockWidth(dateAndTime);
+    int fullClockWidth = measureClockWidth(fullClock);
+    boolean showDate = controlsWidth + dateAndTimeWidth <= availableWidth;
+    boolean showWeekday = showDate
+        && controlsWidth + fullClockWidth <= availableWidth;
+
+    String visibleClockText = visibleTimeText;
+    if (showWeekday) {
+      visibleClockText = fullClock;
+    } else if (showDate) {
+      visibleClockText = dateAndTime;
+    }
+
+    int batteryIconWidth = batteryProgress.getLayoutParams().width;
+    int batteryStatusWidth = (int) Math.ceil(
+        batteryStatus.getPaint().measureText(batteryStatus.getText().toString()));
+    int batteryStatusExtraWidth = Math.max(0, batteryStatusWidth - batteryIconWidth);
+    boolean showBatteryStatus = batteryStatusRequestedVisible
+        && controlsScale >= 1f
+        && !useCompactFooterHeight()
+        && showWeekday
+        && controlsWidth + fullClockWidth + batteryStatusExtraWidth <= availableWidth;
+
+    textClock.setText(visibleClockText);
+    batteryContainer.setVisibility(View.VISIBLE);
+    pageStatus.setVisibility(View.VISIBLE);
+    batteryStatus.setVisibility(showBatteryStatus ? View.VISIBLE : View.GONE);
+  }
+
+  private int measureClockWidth(String text) {
+    return (int) Math.ceil(textClock.getPaint().measureText(text))
+        + textClock.getCompoundPaddingLeft() + textClock.getCompoundPaddingRight();
+  }
+
+  private int updateFooterControls(float scale) {
+    boolean compactHeight = useCompactFooterHeight();
+    int footerHeight = compactHeight
+        ? footerNormalHeight * 2 / 3
+        : footerNormalHeight;
+    int settingWidth = scaledSize(settingIconNormalWidth, scale);
+    int batteryWidth = scaledSize(batteryIconNormalWidth, scale);
+    int batteryHeight = scaledSize(batteryIconNormalHeight, scale);
+    int batteryLeftMargin = scaledSize(batteryContainerNormalLeftMargin, scale);
+    int batteryRightMargin = scaledSize(batteryContainerNormalRightMargin, scale);
+    int pageWidth = scaledSize(pageStatusNormalWidth, scale);
+
+    ViewGroup.LayoutParams params = settingIcon.getLayoutParams();
+    int settingHeight = compactHeight ? footerHeight : settingIconNormalHeight;
+    if (params.width != settingWidth || params.height != settingHeight) {
+      params.width = settingWidth;
+      params.height = settingHeight;
+      settingIcon.setLayoutParams(params);
+    }
+    int horizontalPadding = scaledSize(settingIconNormalHorizontalPadding, scale);
+    int verticalPadding = compactHeight
+        ? settingIconNormalVerticalPadding / 3
+        : settingIconNormalVerticalPadding;
+    if (settingIcon.getPaddingLeft() != horizontalPadding
+        || settingIcon.getPaddingRight() != horizontalPadding
+        || settingIcon.getPaddingTop() != verticalPadding
+        || settingIcon.getPaddingBottom() != verticalPadding) {
+      settingIcon.setPadding(horizontalPadding, verticalPadding,
+          horizontalPadding, verticalPadding);
+    }
+
+    params = batteryProgress.getLayoutParams();
+    if (params.width != batteryWidth || params.height != batteryHeight) {
+      params.width = batteryWidth;
+      params.height = batteryHeight;
+      batteryProgress.setLayoutParams(params);
+    }
+    ViewGroup.MarginLayoutParams batteryParams =
+        (ViewGroup.MarginLayoutParams) batteryContainer.getLayoutParams();
+    if (batteryParams.leftMargin != batteryLeftMargin
+        || batteryParams.rightMargin != batteryRightMargin) {
+      batteryParams.leftMargin = batteryLeftMargin;
+      batteryParams.rightMargin = batteryRightMargin;
+      batteryContainer.setLayoutParams(batteryParams);
+    }
+
+    params = pageStatus.getLayoutParams();
+    if (params.width != pageWidth) {
+      params.width = pageWidth;
+      pageStatus.setLayoutParams(params);
+    }
+    float pageTextSize = Math.max(1f, pageStatusNormalTextSize * scale);
+    if (pageStatus.getTextSize() != pageTextSize) {
+      pageStatus.setTextSize(TypedValue.COMPLEX_UNIT_PX, pageTextSize);
+    }
+
+    setViewHeight(footerContainer, footerHeight);
+    setViewHeight(footerContent, footerHeight);
+    return settingWidth + batteryWidth + batteryLeftMargin + batteryRightMargin + pageWidth;
+  }
+
+  private int scaledSize(int normalSize, float scale) {
+    if (normalSize <= 0) return 0;
+    return Math.max(1, (int) Math.floor(normalSize * scale));
+  }
+
+  private boolean useCompactFooterHeight() {
+    return launcherView != null && launcherView.getRowNum() < 3;
+  }
+
+  private void setViewHeight(View view, int height) {
+    ViewGroup.LayoutParams params = view.getLayoutParams();
+    if (params.height != height) {
+      params.height = height;
+      view.setLayoutParams(params);
+    }
   }
 
   // =========================================================================
@@ -652,10 +836,11 @@ public class Launcher extends AppCompatActivity
 
     int level = (rawLevel >= 0 && scale > 0) ? (rawLevel * 100) / scale : -1;
     batteryProgress.setProgress(level);
-    batteryStatus.setVisibility(View.VISIBLE);
+    batteryStatusRequestedVisible = true;
 
     if (BatteryManager.BATTERY_HEALTH_OVERHEAT == health) {
       batteryStatus.setText(R.string.battery_heat);
+      updateTimeShow();
       return;
     }
 
@@ -671,7 +856,7 @@ public class Launcher extends AppCompatActivity
         if (level < 15) {
           batteryStatus.setText(R.string.battery_low);
         } else {
-          batteryStatus.setVisibility(View.GONE);
+          batteryStatusRequestedVisible = false;
         }
         break;
       case BatteryManager.BATTERY_STATUS_FULL:
@@ -681,6 +866,7 @@ public class Launcher extends AppCompatActivity
         batteryStatus.setText(R.string.battery_wtf);
         break;
     }
+    updateTimeShow();
   }
 
   // =========================================================================
