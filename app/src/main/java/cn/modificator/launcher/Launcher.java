@@ -670,6 +670,7 @@ public class Launcher extends AppCompatActivity
     Locale locale = Locale.getDefault();
 
     String dateText = new SimpleDateFormat("yyyy-MM-dd", locale).format(calendar.getTime());
+    String shortDateText = new SimpleDateFormat("MM-dd", locale).format(calendar.getTime());
     StringBuilder timeFormat = new StringBuilder(is24Hour ? "H:mm" : "h:mm");
     if (showSeconds) {
       timeFormat.append(":ss");
@@ -686,11 +687,12 @@ public class Launcher extends AppCompatActivity
     }
     String weekdayText = new SimpleDateFormat("EEEE", locale).format(calendar.getTime());
 
-    updateFooterLayout(dateText, plainTimeText, timeText, weekdayText);
+    updateFooterLayout(dateText, shortDateText, plainTimeText, timeText, weekdayText);
   }
 
-  private void updateFooterLayout(String dateText, String plainTimeText,
-                                  String timeText, String weekdayText) {
+  private void updateFooterLayout(String dateText, String shortDateText,
+                                  String plainTimeText, String timeText,
+                                  String weekdayText) {
     textClock.setText(plainTimeText);
     textClock.setVisibility(View.VISIBLE);
     int availableWidth = footerContent.getWidth()
@@ -698,7 +700,6 @@ public class Launcher extends AppCompatActivity
     if (availableWidth <= 0) return;
 
     int plainTimeWidth = measureClockWidth(plainTimeText);
-    int timeWidth = measureClockWidth(timeText);
 
     int normalControlsWidth = settingIconNormalWidth + batteryIconNormalWidth
         + batteryContainerNormalLeftMargin + batteryContainerNormalRightMargin
@@ -708,21 +709,25 @@ public class Launcher extends AppCompatActivity
             (availableWidth - plainTimeWidth) / (float) normalControlsWidth));
     int controlsWidth = updateFooterControls(controlsScale);
 
-    boolean showTimePeriod = controlsWidth + timeWidth <= availableWidth;
-    String visibleTimeText = showTimePeriod ? timeText : plainTimeText;
-    String dateAndTime = dateText + " " + visibleTimeText;
+    String dateAndTime = dateText + " " + timeText;
+    String shortDateAndTime = shortDateText + " " + plainTimeText;
     String fullClock = dateAndTime + " " + weekdayText;
     int dateAndTimeWidth = measureClockWidth(dateAndTime);
+    int shortDateAndTimeWidth = measureClockWidth(shortDateAndTime);
     int fullClockWidth = measureClockWidth(fullClock);
     boolean showDate = controlsWidth + dateAndTimeWidth <= availableWidth;
+    boolean showShortDate = !showDate
+        && controlsWidth + shortDateAndTimeWidth <= availableWidth;
     boolean showWeekday = showDate
         && controlsWidth + fullClockWidth <= availableWidth;
 
-    String visibleClockText = visibleTimeText;
+    String visibleClockText = plainTimeText;
     if (showWeekday) {
       visibleClockText = fullClock;
     } else if (showDate) {
       visibleClockText = dateAndTime;
+    } else if (showShortDate) {
+      visibleClockText = shortDateAndTime;
     }
 
     int batteryIconWidth = batteryProgress.getLayoutParams().width;
