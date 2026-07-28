@@ -13,6 +13,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ServiceInfo;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
@@ -22,6 +23,8 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import androidx.core.app.ServiceCompat;
 
 import org.apache.ftpserver.DataConnectionConfigurationFactory;
 import org.apache.ftpserver.ConnectionConfigFactory;
@@ -97,6 +100,7 @@ public class FTPService extends Service implements Runnable {
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
+    Log.i(TAG, "onStartCommand startId=" + startId);
     startForegroundCompat();
     shouldExit = false;
     int attempts = 10;
@@ -128,6 +132,7 @@ public class FTPService extends Service implements Runnable {
 
   @Override
   public void run() {
+    Log.i(TAG, "FTP server initialization started");
     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
     FtpServerFactory serverFactory = new FtpServerFactory();
@@ -178,6 +183,8 @@ public class FTPService extends Service implements Runnable {
     try {
       server = serverFactory.createServer();
       server.start();
+      Log.i(TAG, "FTP server started on "
+          + (localAddress != null ? localAddress.getHostAddress() : "0.0.0.0") + ":" + port);
       sendBroadcast(new Intent(FTPService.ACTION_STARTED));
     } catch (Exception e) {
       Log.e(TAG, "Failed to start FTP server", e);
@@ -263,7 +270,12 @@ public class FTPService extends Service implements Runnable {
         .setContentText("网络传书已开启")
         .setOngoing(true)
         .build();
-    startForeground(NOTIFICATION_ID, notification);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      ServiceCompat.startForeground(this, NOTIFICATION_ID, notification,
+          ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+    } else {
+      startForeground(NOTIFICATION_ID, notification);
+    }
   }
 
   private void stopForegroundCompat() {
