@@ -50,6 +50,9 @@
     <string name="battery_wtf" translatable="false">WTF?</string>
 
     <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_app_info">App info</string>
+    <string name="dialog_copy_package_name">Copy package name %s</string>
+    <string name="package_name_copied">Package name copied</string>
     <string name="dialog_hide">Hide</string>
     <string name="dialog_uninstall">Uninstall</string>
     <string name="dialog_pkg_name">Package Name: %s</string>

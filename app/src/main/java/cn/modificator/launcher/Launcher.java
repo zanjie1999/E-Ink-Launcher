@@ -3,6 +3,8 @@ package cn.modificator.launcher;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.util.Log;
@@ -630,30 +633,45 @@ public class Launcher extends AppCompatActivity
   }
 
   private void showAppInfoDialog(ResolveInfo info, final String packageName) {
+    CharSequence[] actions = {
+        getString(R.string.dialog_app_info),
+        getString(R.string.dialog_copy_package_name, packageName),
+        getString(R.string.dialog_hide),
+        getString(R.string.dialog_uninstall)
+    };
     new AlertDialog.Builder(this)
         .setIcon(iconCache.getIcon(packageName, info, getPackageManager()))
         .setTitle(iconCache.getLabel(packageName, info, getPackageManager()))
-        .setMessage(getString(R.string.dialog_pkg_name, packageName))
-        .setPositiveButton(R.string.dialog_cancel, null)
-        .setNeutralButton(R.string.dialog_hide, new DialogInterface.OnClickListener() {
+        .setItems(actions, new DialogInterface.OnClickListener() {
           @Override
           public void onClick(DialogInterface dialog, int which) {
-            Set<String> hideApps = binder.getHideAppPkg();
-            if (!hideApps.add(packageName)) {
-              hideApps.remove(packageName);
+            if (which == 0) {
+              Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                  Uri.parse("package:" + packageName));
+              startActivity(intent);
+            } else if (which == 1) {
+              ClipboardManager clipboard = (ClipboardManager)
+                  getSystemService(Context.CLIPBOARD_SERVICE);
+              if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("packageName", packageName));
+                Toast.makeText(Launcher.this, R.string.package_name_copied,
+                    Toast.LENGTH_SHORT).show();
+              }
+            } else if (which == 2) {
+              Set<String> hideApps = binder.getHideAppPkg();
+              if (!hideApps.add(packageName)) {
+                hideApps.remove(packageName);
+              }
+              config.setHideApps(new HashSet<>(hideApps));
+              dataCenter.setHideApps(config.getHideApps());
+            } else if (which == 3) {
+              Intent deleteIntent = new Intent(Intent.ACTION_DELETE,
+                  Uri.parse("package:" + packageName));
+              startActivity(deleteIntent);
             }
-            config.setHideApps(new HashSet<>(hideApps));
-            dataCenter.setHideApps(config.getHideApps());
           }
         })
-        .setNegativeButton(R.string.dialog_uninstall, new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialog, int which) {
-            Intent deleteIntent = new Intent(Intent.ACTION_DELETE,
-                Uri.parse("package:" + packageName));
-            startActivity(deleteIntent);
-          }
-        })
+        .setNegativeButton(R.string.dialog_cancel, null)
         .show();
   }
 

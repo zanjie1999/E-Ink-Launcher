@@ -10,8 +10,8 @@ android {
         applicationId = "com.zyyme.einklauncher"
         minSdk = 14
         targetSdk = 36
-        versionCode = 44
-        versionName = "2.8"
+        versionCode = 45
+        versionName = "2.9"
         multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
