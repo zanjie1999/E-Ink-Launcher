@@ -17,6 +17,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
@@ -196,35 +197,41 @@ public class Launcher extends AppCompatActivity
     Log.d("zyyme设置themeMode", String.valueOf(themeMode));
     if (themeMode == 0) {
       AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+      applyLauncherBackground(getResources().getColor(R.color.mainBgColor));
     } else if (themeMode == 1) {
       AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+      applyLauncherBackground(getResources().getColor(R.color.mainBgColor));
     } else if (themeMode == 2) {
       AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+      applyLauncherBackground(getResources().getColor(R.color.mainBgColor));
     } else if (themeMode == 3) {
       AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-      findViewById(R.id.launcherBg).post(new Runnable() {
-        @Override
-        public void run() {
-          findViewById(R.id.launcherBg).setBackgroundColor(0xffffffff);
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setStatusBarColor(0xffffffff);
-            getWindow().setNavigationBarColor(0xffffffff);
-          }
-        }
-      });
+      applyLauncherBackground(Color.WHITE);
     } else if (themeMode == 4) {
       AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-      findViewById(R.id.launcherBg).post(new Runnable() {
-        @Override
-        public void run() {
-          findViewById(R.id.launcherBg).setBackgroundColor(0xff000000);
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setStatusBarColor(0xff000000);
-            getWindow().setNavigationBarColor(0xff000000);
-          }
-        }
-      });
+      applyLauncherBackground(Color.BLACK);
+    } else if (themeMode == 5) {
+      // 亮色配色，但不绘制白色半透明背景，直接显示壁纸。
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+      applyLauncherBackground(Color.TRANSPARENT);
+    } else if (themeMode == 6) {
+      // 暗色配色，但不绘制黑色半透明背景，直接显示壁纸。
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+      applyLauncherBackground(Color.TRANSPARENT);
     }
+  }
+
+  private void applyLauncherBackground(final int backgroundColor) {
+    findViewById(R.id.launcherBg).post(new Runnable() {
+      @Override
+      public void run() {
+        findViewById(R.id.launcherBg).setBackgroundColor(backgroundColor);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+          getWindow().setStatusBarColor(backgroundColor);
+          getWindow().setNavigationBarColor(backgroundColor);
+        }
+      }
+    });
   }
 
   @Override

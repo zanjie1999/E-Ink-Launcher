@@ -101,6 +101,8 @@
         <item>暗色模式</item>
         <item>纯白背景</item>
         <item>纯黑背景</item>
+        <item>透明黑字</item>
+        <item>透明白字</item>
     </string-array>
     <string name="setting_sort_mode">Sort</string>
     <string name="setting_screen_orientation">Screen orientation</string>

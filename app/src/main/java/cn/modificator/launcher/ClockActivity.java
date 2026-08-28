@@ -3,6 +3,7 @@ package cn.modificator.launcher;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -163,6 +164,8 @@ public class ClockActivity extends AppCompatActivity {
       backgroundColor = 0xffffffff;
     } else if (themeMode == 4) {
       backgroundColor = 0xff000000;
+    } else if (themeMode == 5 || themeMode == 6) {
+      backgroundColor = Color.TRANSPARENT;
     }
 
     findViewById(R.id.clockRoot).setBackgroundColor(backgroundColor);
