@@ -4,6 +4,9 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -15,6 +18,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -67,6 +72,8 @@ public class AppItemBinder {
       return thread;
     }
   });
+  private final Set<String> loadingIcons = Collections.synchronizedSet(new HashSet<String>());
+  private final AtomicInteger bindGeneration = new AtomicInteger();
 
   private Callback callback;
   private IconCache iconCache;
@@ -132,13 +139,14 @@ public class AppItemBinder {
    */
   void bindAll(List<LauncherAdapter.ItemViewHolder> holders, List<ResolveInfo> data) {
     this.dataRef = data;
+    final int generation = bindGeneration.incrementAndGet();
     Map<String, File> customIcons = iconCache != null ? iconCache.getCustomIconMap() : null;
     WifiControl.bind(null, customIcons);
 
     for (int i = 0; i < holders.size(); i++) {
       LauncherAdapter.ItemViewHolder holder = holders.get(i);
       if (i < data.size()) {
-        bindItem(holder, i, customIcons);
+        bindItem(holder, i, customIcons, generation);
       } else {
         clearItem(holder);
       }
@@ -181,7 +189,7 @@ public class AppItemBinder {
   // =========================================================================
 
   private void bindItem(LauncherAdapter.ItemViewHolder holder, int position,
-                         Map<String, File> customIcons) {
+                         Map<String, File> customIcons, int generation) {
     ResolveInfo info = dataRef.get(position);
     String pkg = info.activityInfo.packageName;
 
@@ -195,7 +203,7 @@ public class AppItemBinder {
       loadIcon(holder.appImage, pkg, R.drawable.ic_onekeyclear, customIcons);
       holder.appName.setText(R.string.item_clear);
     } else {
-      loadIconAsync(holder.appImage, pkg, info, customIcons);
+      loadIconAsync(holder.appImage, componentKey(info), info, customIcons, generation);
       holder.appName.setText(iconCache != null
           ? iconCache.getLabel(pkg, info, packageManager)
           : info.loadLabel(packageManager));
@@ -232,7 +240,7 @@ public class AppItemBinder {
                          Map<String, File> customIcons) {
     File custom = customIcons != null ? customIcons.get(pkg) : null;
     if (custom != null) {
-      iv.setImageURI(Uri.fromFile(custom));
+      setCustomIcon(iv, custom, pkg);
     } else {
       iv.setImageResource(defaultRes);
     }
@@ -242,51 +250,95 @@ public class AppItemBinder {
                           Map<String, File> customIcons) {
     File custom = customIcons != null ? customIcons.get(pkg) : null;
     if (custom != null) {
-      iv.setImageURI(Uri.fromFile(custom));
+      setCustomIcon(iv, custom, componentKey(info));
     } else {
       Drawable icon = iconCache != null
-          ? iconCache.getIcon(pkg, info, packageManager)
+          ? iconCache.getIcon(componentKey(info), info, packageManager)
           : info.loadIcon(packageManager);
       iv.setImageDrawable(icon);
     }
   }
 
-  private void loadIconAsync(final ImageView iv, final String pkg, final ResolveInfo info,
-                             Map<String, File> customIcons) {
+  private void loadIconAsync(final ImageView iv, final String cacheKey, final ResolveInfo info,
+                             Map<String, File> customIcons, final int generation) {
+    final String pkg = info.activityInfo.packageName;
     File custom = customIcons != null ? customIcons.get(pkg) : null;
     if (custom != null) {
-      iv.setTag(R.id.appImage, pkg);
-      iv.setImageURI(Uri.fromFile(custom));
+      iv.setTag(R.id.appImage, cacheKey);
+      setCustomIcon(iv, custom, cacheKey);
       return;
     }
 
-    iv.setTag(R.id.appImage, pkg);
-    Drawable cached = iconCache != null ? iconCache.getCachedIcon(pkg) : null;
+    iv.setTag(R.id.appImage, cacheKey);
+    Drawable cached = iconCache != null ? iconCache.getCachedIcon(cacheKey) : null;
     if (cached != null) {
       iv.setImageDrawable(cached);
       return;
     }
     iv.setImageDrawable(null);
+    if (!loadingIcons.add(cacheKey)) return;
     iconLoadExecutor.execute(new Runnable() {
       @Override
       public void run() {
-        final Drawable icon = iconCache != null
-            ? iconCache.getIcon(pkg, info, packageManager)
-            : info.loadIcon(packageManager);
-        mainHandler.post(new Runnable() {
-          @Override
-          public void run() {
-            Object boundPackage = iv.getTag(R.id.appImage);
-            if (pkg.equals(boundPackage)) {
-              iv.setImageDrawable(icon);
+        try {
+          final Drawable icon = iconCache != null
+              ? iconCache.getIcon(cacheKey, info, packageManager)
+              : info.loadIcon(packageManager);
+          mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+              Object boundPackage = iv.getTag(R.id.appImage);
+              // A result remains valid across a newer bind when the same
+              // component is still attached to this cell.
+              if (cacheKey.equals(boundPackage) && generation <= bindGeneration.get()) {
+                iv.setImageDrawable(icon);
+              }
             }
-          }
-        });
+          });
+        } finally {
+          loadingIcons.remove(cacheKey);
+        }
       }
     });
   }
 
+  private String componentKey(ResolveInfo info) {
+    if (info == null || info.activityInfo == null) return "";
+    return info.activityInfo.packageName + "/" + info.activityInfo.name;
+  }
+
+  private void setCustomIcon(ImageView view, File file, String componentKey) {
+    BitmapFactory.Options bounds = new BitmapFactory.Options();
+    bounds.inJustDecodeBounds = true;
+    BitmapFactory.decodeFile(file.getAbsolutePath(), bounds);
+    int target = Math.max(64, Math.max(view.getWidth(), view.getHeight()));
+    if (target <= 64) target = 256;
+    String customCacheKey = componentKey + "#custom#" + file.lastModified() + "#" + target;
+    Drawable cached = iconCache != null ? iconCache.getCachedIcon(customCacheKey) : null;
+    if (cached != null) {
+      view.setImageDrawable(cached);
+      return;
+    }
+    int sample = 1;
+    while (bounds.outWidth / sample > target * 2 || bounds.outHeight / sample > target * 2) {
+      sample <<= 1;
+    }
+    BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inSampleSize = sample;
+    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+    Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+    if (bitmap != null) {
+      Drawable drawable = new BitmapDrawable(view.getResources(), bitmap);
+      if (iconCache != null) iconCache.putIcon(customCacheKey, drawable);
+      view.setImageDrawable(drawable);
+    } else {
+      view.setImageURI(Uri.fromFile(file));
+    }
+  }
+
   public void shutdown() {
+    bindGeneration.incrementAndGet();
+    loadingIcons.clear();
     mainHandler.removeCallbacksAndMessages(null);
     iconLoadExecutor.shutdownNow();
   }

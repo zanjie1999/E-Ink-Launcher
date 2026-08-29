@@ -36,6 +36,7 @@ public class WifiControl {
   private final WifiStateReceiver wifiStateReceiver;
   private final WifiManager wifiManager;
   private final Context appContext;
+  private boolean receiverRegistered;
 
   private int showNameRes;
   private int showIconRes;
@@ -45,6 +46,7 @@ public class WifiControl {
   private static WifiControl instance;
 
   public static void init(Context context) {
+    release();
     instance = new WifiControl(context.getApplicationContext());
   }
 
@@ -59,6 +61,21 @@ public class WifiControl {
     filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
     filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
     Utils.registerReceiverCompat(appContext, wifiStateReceiver, filter);
+    receiverRegistered = true;
+  }
+
+  public static void release() {
+    if (instance == null) return;
+    instance.appImage = null;
+    instance.appName = null;
+    if (instance.receiverRegistered) {
+      try {
+        instance.appContext.unregisterReceiver(instance.wifiStateReceiver);
+      } catch (IllegalArgumentException ignored) {
+      }
+      instance.receiverRegistered = false;
+    }
+    instance = null;
   }
 
   public static void bind(View view, Map<String, File> iconReplaceMap) {

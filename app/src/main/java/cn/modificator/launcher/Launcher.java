@@ -258,6 +258,15 @@ public class Launcher extends AppCompatActivity
     }
     unregisterDynamicReceivers();
     unregisterReceiver(appChangeReceiver);
+    WifiControl.release();
+  }
+
+  @Override
+  public void onTrimMemory(int level) {
+    super.onTrimMemory(level);
+    if (iconCache != null) {
+      iconCache.trimMemory(level);
+    }
   }
 
   @Override
@@ -510,8 +519,10 @@ public class Launcher extends AppCompatActivity
 
   private void refreshIcons() {
     if (adapter == null || iconCache == null) return;
-    iconCache.refreshCustomIcons(getExternalCacheDir() != null, config.isShowCustomIcon());
-    adapter.refreshDisplay();
+    if (iconCache.refreshCustomIcons(
+        getExternalCacheDir() != null, config.isShowCustomIcon())) {
+      adapter.refreshDisplay();
+    }
   }
 
   private void applyGridSize(int colNum, int rowNum) {

@@ -4,6 +4,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Environment;
+import android.util.LruCache;
 
 import java.io.File;
 import java.util.Collections;
@@ -23,7 +24,14 @@ public class IconCache {
 
   private static final String ICON_DIR = "E-Ink Launcher" + File.separator + "icon";
 
-  private final Map<String, Drawable> drawableCache = new HashMap<>();
+  // Keep only the icons needed by the current/nearby pages.  An unbounded map
+  // retains every Drawable ever seen until the process dies.
+  private final LruCache<String, Drawable> drawableCache = new LruCache<String, Drawable>(48) {
+    @Override
+    protected int sizeOf(String key, Drawable value) {
+      return 1;
+    }
+  };
   private final Map<String, CharSequence> labelCache = new HashMap<>();
   private final Map<String, File> customIconMap = new HashMap<>();
   private boolean dirty = true;
@@ -46,6 +54,7 @@ public class IconCache {
    */
   public boolean refreshCustomIcons(boolean hasExternalStorage, boolean showCustomIcon) {
     if (!dirty) return false;
+    Map<String, File> previous = new HashMap<>(customIconMap);
     customIconMap.clear();
 
     if (hasExternalStorage && !showCustomIcon) {
@@ -66,7 +75,7 @@ public class IconCache {
       }
     }
     dirty = false;
-    return true;
+    return !previous.equals(customIconMap);
   }
 
   private static File getIconDirectory() {
@@ -92,8 +101,12 @@ public class IconCache {
   // =========================================================================
 
   public Drawable getCachedIcon(String packageName) {
-    synchronized (drawableCache) {
-      return drawableCache.get(packageName);
+    return drawableCache.get(packageName);
+  }
+
+  public void putIcon(String cacheKey, Drawable drawable) {
+    if (cacheKey != null && drawable != null) {
+      drawableCache.put(cacheKey, drawable);
     }
   }
 
@@ -104,12 +117,10 @@ public class IconCache {
       return cached;
     }
     Drawable loaded = info.loadIcon(pm);
-    synchronized (drawableCache) {
-      cached = drawableCache.get(packageName);
-      if (cached == null) {
-        drawableCache.put(packageName, loaded);
-        cached = loaded;
-      }
+    cached = drawableCache.get(packageName);
+    if (cached == null) {
+      drawableCache.put(packageName, loaded);
+      cached = loaded;
     }
     return cached;
   }
@@ -135,11 +146,20 @@ public class IconCache {
 
   /** 清除图标和标签缓存（应用安装/卸载时调用） */
   public void clearAppCache() {
-    synchronized (drawableCache) {
-      drawableCache.clear();
-    }
+    drawableCache.evictAll();
     synchronized (labelCache) {
       labelCache.clear();
+    }
+  }
+
+  /** Release the least recently used icons under memory pressure. */
+  public void trimMemory(int level) {
+    if (level >= 80) {
+      drawableCache.evictAll();
+    } else if (level >= 40) {
+      // evictAll is available on every supported API and avoids retaining
+      // large bitmap-backed Drawables during a moderate memory warning.
+      drawableCache.evictAll();
     }
   }
 }
